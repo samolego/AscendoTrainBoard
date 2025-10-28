@@ -197,7 +197,7 @@ Retrieve details of a specific climbing problem by ID.
   "author": "john_doe",
   "grade": 6,
   "sector_id": "sector-a",
-  "hold_sequence": [[0, 1], [1, 2], [2, 3]],
+  "hold_sequence": [[0, 1, 0], [1, 2, 2], [2, 3, 3]],
   "average_grade": 6.5,
   "average_stars": 4.5,
   "created_at": "2025-01-15T10:30:00Z",
@@ -206,7 +206,10 @@ Retrieve details of a specific climbing problem by ID.
 ```
 
 **Fields:**
-- `hold_sequence`: Array of `[row, col]` indices into the sector's holds array (0-indexed)
+- `hold_sequence`: Array of `[row, col, type]` where:
+  - `row`: Row index into the sector's holds array (0-indexed)
+  - `col`: Column index into the sector's holds array (0-indexed)
+  - `type`: Hold type as integer (0=Start, 1=Foot, 2=Normal, 3=End)
 - `average_grade`: Calculated average of all user-submitted grades (null if no grades yet)
 - `average_stars`: Calculated average of all user ratings (null if no grades yet)
 
@@ -227,14 +230,17 @@ Create a new climbing problem.
   "description": "string (optional)",
   "grade": 1,
   "sector_id": "sector-a",
-  "hold_sequence": [[0, 1], [1, 2]]
+  "hold_sequence": [[0, 1, 0], [1, 2, 2]]
 }
 ```
 
 **Required Fields:**
 - `grade`: Problem difficulty grade (integer)
 - `sector_id`: Sector name (string, must match an existing sector folder)
-- `hold_sequence`: Array of hold indices `[row, col]`
+- `hold_sequence`: Array of holds as `[row, col, type]` where:
+  - `row`: Row index into the sector's holds array
+  - `col`: Column index into the sector's holds array
+  - `type`: Hold type as integer (0=Start, 1=Foot, 2=Normal, 3=End)
 
 **Optional Fields:**
 - `name`: Problem name (if not provided, defaults to "Problem {id}")
@@ -251,7 +257,7 @@ Create a new climbing problem.
   "author": "john_doe",
   "grade": 6,
   "sector_id": "sector-a",
-  "hold_sequence": [[0, 1], [1, 2], [2, 3]],
+  "hold_sequence": [[0, 1, 0], [1, 2, 2], [2, 3, 3]],
   "average_grade": null,
   "average_stars": null,
   "created_at": "2025-01-15T10:30:00Z",
@@ -277,7 +283,7 @@ Update an existing climbing problem.
   "name": "string",
   "description": "string",
   "grade": 1,
-  "hold_sequence": [[0, 1], [1, 2]]
+  "hold_sequence": [[0, 1, 0], [1, 2, 2]]
 }
 ```
 
@@ -292,7 +298,7 @@ Update an existing climbing problem.
   "author": "john_doe",
   "grade": 7,
   "sector_id": "sector-a",
-  "hold_sequence": [[0, 1], [1, 2], [2, 4]],
+  "hold_sequence": [[0, 1, 0], [1, 2, 2], [2, 4, 3]],
   "average_grade": 6.5,
   "average_stars": 4.5,
   "created_at": "2025-01-15T10:30:00Z",

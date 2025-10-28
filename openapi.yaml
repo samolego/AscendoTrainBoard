@@ -854,15 +854,15 @@ components:
           properties:
             hold_sequence:
               type: array
-              description: Array of [row, col] indices into the sector's holds array (0-indexed)
+              description: "Array of [row, col, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)"
               items:
                 type: array
                 items:
                   type: integer
                   format: int32
-                minItems: 2
-                maxItems: 2
-              example: [[0, 1], [1, 2], [2, 3]]
+                minItems: 3
+                maxItems: 3
+              example: [[0, 1, 0], [1, 2, 2], [2, 3, 3]]
 
     ProblemList:
       type: object
@@ -917,16 +917,16 @@ components:
           description: Sector name (must match an existing sector folder)
         hold_sequence:
           type: array
-          description: Array of [row, col] indices into the sector's holds array (0-indexed)
+          description: "Array of [row, col, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)"
           items:
             type: array
             items:
               type: integer
               format: int32
-            minItems: 2
-            maxItems: 2
+            minItems: 3
+            maxItems: 3
           minItems: 1
-          example: [[0, 1], [1, 2], [2, 3]]
+          example: [[0, 1, 0], [1, 2, 2], [2, 3, 3]]
 
     UpdateProblemRequest:
       type: object
@@ -943,16 +943,16 @@ components:
           example: 7
         hold_sequence:
           type: array
-          description: Array of [row, col] indices into the sector's holds array (0-indexed)
+          description: "Array of [row, col, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)"
           items:
             type: array
             items:
               type: integer
               format: int32
-            minItems: 2
-            maxItems: 2
+            minItems: 3
+            maxItems: 3
           minItems: 1
-          example: [[0, 1], [1, 2], [2, 4]]
+          example: [[0, 1, 0], [1, 2, 2], [2, 4, 3]]
 
     Grade:
       type: object
