@@ -213,12 +213,18 @@ paths:
           schema:
             type: string
           description: Filter by sector name
-        - name: grade
+        - name: min_grade
           in: query
           required: false
           schema:
             type: integer
-          description: Filter by grade
+          description: Filter by minimum grade
+        - name: max_grade
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by maximum grade
         - name: author
           in: query
           required: false
@@ -796,9 +802,7 @@ components:
         - id
         - author
         - grade
-        - sector_id
-        - created_at
-        - updated_at
+        - sector_name
       properties:
         id:
           type: integer
@@ -820,7 +824,7 @@ components:
           format: int32
           example: 6
           description: Numeric grade (converted to Fontainebleau on client)
-        sector_id:
+        sector_name:
           type: string
           example: sector-a
           description: Sector name
@@ -836,10 +840,6 @@ components:
           nullable: true
           example: 4.5
           description: Average of all user ratings (null if no grades)
-        created_at:
-          type: string
-          format: date-time
-          example: "2025-01-15T10:30:00Z"
         updated_at:
           type: string
           format: date-time
@@ -896,7 +896,7 @@ components:
       type: object
       required:
         - grade
-        - sector_id
+        - sector_name
         - hold_sequence
       properties:
         name:
@@ -911,7 +911,7 @@ components:
           format: int32
           example: 6
           description: Numeric grade (converted to Fontainebleau on client)
-        sector_id:
+        sector_name:
           type: string
           example: sector-a
           description: Sector name (must match an existing sector folder)

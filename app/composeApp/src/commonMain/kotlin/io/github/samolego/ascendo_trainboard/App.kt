@@ -1,49 +1,23 @@
 package io.github.samolego.ascendo_trainboard
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
-
-import ascendotrainboard.composeapp.generated.resources.Res
-import ascendotrainboard.composeapp.generated.resources.compose_multiplatform
+import io.github.samolego.ascendo_trainboard.api.AscendoApi
+import io.github.samolego.ascendo_trainboard.ui.problems.ProblemListScreen
+import io.github.samolego.ascendo_trainboard.ui.problems.ProblemListViewModel
 
 @Composable
-@Preview
 fun App() {
     MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+        val api = remember { AscendoApi(baseUrl = "http://localhost:3000/api/v1") }
+        val viewModel = remember { ProblemListViewModel(api) }
+
+        ProblemListScreen(
+            viewModel = viewModel,
+            onProblemClick = { problemId ->
+                println("Clicked problem: $problemId")
+                // TODO: Navigate to problem detail screen
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
-                }
-            }
-        }
+        )
     }
 }

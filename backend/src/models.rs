@@ -64,7 +64,6 @@ pub struct Problem {
     pub sector_name: String,
     pub hold_sequence: Vec<Hold>,
     pub grades: Vec<Grade>,
-    pub created_at: String,
     pub updated_at: String,
 }
 
@@ -78,7 +77,6 @@ pub struct ProblemSummary {
     pub sector_name: String,
     pub average_grade: Option<f32>,
     pub average_stars: Option<f32>,
-    pub created_at: String,
     pub updated_at: String,
 }
 
@@ -93,7 +91,6 @@ pub struct ProblemDetail {
     pub hold_sequence: Vec<Hold>,
     pub average_grade: Option<f32>,
     pub average_stars: Option<f32>,
-    pub created_at: String,
     pub updated_at: String,
 }
 
@@ -195,7 +192,6 @@ impl Problem {
             sector_name: self.sector_name.clone(),
             average_grade: avg_grade,
             average_stars: avg_stars,
-            created_at: self.created_at.clone(),
             updated_at: self.updated_at.clone(),
         }
     }
@@ -212,7 +208,6 @@ impl Problem {
             hold_sequence: self.hold_sequence.clone(),
             average_grade: avg_grade,
             average_stars: avg_stars,
-            created_at: self.created_at.clone(),
             updated_at: self.updated_at.clone(),
         }
     }

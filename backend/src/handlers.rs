@@ -254,7 +254,8 @@ pub async fn get_sector_image(
 #[derive(Debug, Deserialize)]
 pub struct ProblemQuery {
     pub sector: Option<String>,
-    pub grade: Option<u8>,
+    pub min_grade: Option<u8>,
+    pub max_grade: Option<u8>,
     pub author: Option<String>,
     pub page: Option<u32>,
     pub per_page: Option<u32>,
@@ -269,7 +270,8 @@ pub async fn list_problems(
     let filtered: Vec<&Problem> = problems
         .iter()
         .filter(|p| query.sector.as_ref().map_or(true, |s| p.sector_name == *s))
-        .filter(|p| query.grade.map_or(true, |g| p.grade == g))
+        .filter(|p| query.min_grade.map_or(true, |g| p.grade >= g))
+        .filter(|p| query.max_grade.map_or(true, |g| p.grade <= g))
         .filter(|p| query.author.as_ref().map_or(true, |a| p.created_by == *a))
         .collect();
 
@@ -353,7 +355,6 @@ pub async fn create_problem(
         sector_name: payload.sector_name,
         hold_sequence: payload.hold_sequence,
         grades: Vec::new(),
-        created_at: now(),
         updated_at: now(),
     };
 
@@ -425,6 +426,8 @@ pub async fn update_problem(
     }
     if let Some(hold_sequence) = payload.hold_sequence {
         problem.hold_sequence = hold_sequence;
+        // Clear grades if hold sequence changes
+        problem.grades.clear();
     }
 
     problem.updated_at = now();
