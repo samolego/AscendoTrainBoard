@@ -27,7 +27,7 @@ import kotlinx.serialization.encoding.*
  * @param password 
  * @param isAdmin 
  */
-@Serializable@Serializable
+@Serializable
 
 data class UpdateUserRequest (
 

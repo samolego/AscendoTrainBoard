@@ -28,7 +28,7 @@ import kotlinx.serialization.encoding.*
  * @param stars User's rating (1-5 stars)
  * @param createdAt 
  */
-@Serializable@Serializable
+@Serializable
 
 data class Grade (
 

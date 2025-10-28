@@ -26,7 +26,7 @@ import kotlinx.serialization.encoding.*
  * @param error Error message description
  * @param code Error code
  */
-@Serializable@Serializable
+@Serializable
 
 data class Error (
 

@@ -29,7 +29,7 @@ import kotlinx.serialization.encoding.*
  * @param name Problem name (defaults to \"Problem {id}\" if not provided)
  * @param description 
  */
-@Serializable@Serializable
+@Serializable
 
 data class CreateProblemRequest (
 

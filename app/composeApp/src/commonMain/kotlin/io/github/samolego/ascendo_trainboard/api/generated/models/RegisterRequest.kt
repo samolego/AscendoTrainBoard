@@ -26,7 +26,7 @@ import kotlinx.serialization.encoding.*
  * @param username 
  * @param password 
  */
-@Serializable@Serializable
+@Serializable
 
 data class RegisterRequest (
 

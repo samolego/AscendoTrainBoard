@@ -28,7 +28,7 @@ import kotlinx.serialization.encoding.*
  * @param grade 
  * @param holdSequence Array of [row, col, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)
  */
-@Serializable@Serializable
+@Serializable
 
 data class UpdateProblemRequest (
 

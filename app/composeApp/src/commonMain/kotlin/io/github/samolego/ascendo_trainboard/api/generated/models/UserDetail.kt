@@ -28,7 +28,7 @@ import kotlinx.serialization.encoding.*
  * @param isAdmin 
  * @param createdAt 
  */
-@Serializable@Serializable
+@Serializable
 
 data class UserDetail (
 

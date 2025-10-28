@@ -26,7 +26,7 @@ import kotlinx.serialization.encoding.*
  * @param grade Suggested grade (integer, converted to Fontainebleau on client)
  * @param stars Rating (1-5 stars)
  */
-@Serializable@Serializable
+@Serializable
 
 data class SubmitGradeRequest (
 

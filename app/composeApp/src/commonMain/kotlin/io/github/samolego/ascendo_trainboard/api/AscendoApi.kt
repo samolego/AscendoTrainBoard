@@ -104,7 +104,7 @@ class AscendoApi(
 
     // Problem endpoints
     suspend fun getProblems(
-        sector: Int? = null,
+        sector: String? = null,
         minGrade: Int? = null,
         maxGrade: Int? = null,
         author: String? = null,

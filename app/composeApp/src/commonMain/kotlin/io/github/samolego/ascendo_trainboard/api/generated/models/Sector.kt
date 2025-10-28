@@ -26,7 +26,7 @@ import kotlinx.serialization.encoding.*
  * @param name Sector name (matches folder name)
  * @param holds Array of hold bounding boxes [start_x, start_y, end_x, end_y] in pixels
  */
-@Serializable@Serializable
+@Serializable
 
 data class Sector (
 

@@ -29,7 +29,7 @@ import kotlinx.serialization.encoding.*
  * @param page Current page number
  * @param perPage Number of items per page
  */
-@Serializable@Serializable
+@Serializable
 
 data class ProblemList (
 

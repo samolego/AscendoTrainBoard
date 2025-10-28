@@ -27,7 +27,7 @@ import kotlinx.serialization.encoding.*
  * @param username 
  * @param isAdmin 
  */
-@Serializable@Serializable
+@Serializable
 
 data class User (
 

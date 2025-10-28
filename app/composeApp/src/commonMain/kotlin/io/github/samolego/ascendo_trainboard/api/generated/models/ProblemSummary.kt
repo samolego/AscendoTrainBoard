@@ -33,7 +33,7 @@ import kotlinx.serialization.encoding.*
  * @param averageStars Average of all user ratings (null if no grades)
  * @param updatedAt 
  */
-@Serializable@Serializable
+@Serializable
 
 data class ProblemSummary (
 

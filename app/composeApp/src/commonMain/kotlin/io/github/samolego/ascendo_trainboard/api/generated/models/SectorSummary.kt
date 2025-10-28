@@ -25,7 +25,7 @@ import kotlinx.serialization.encoding.*
  *
  * @param name Sector name (matches folder name)
  */
-@Serializable@Serializable
+@Serializable
 
 data class SectorSummary (
 

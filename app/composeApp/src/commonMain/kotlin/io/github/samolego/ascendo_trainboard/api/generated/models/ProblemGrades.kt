@@ -29,7 +29,7 @@ import kotlinx.serialization.encoding.*
  * @param averageGrade Calculated average of all submitted grades
  * @param averageStars Calculated average of all star ratings
  */
-@Serializable@Serializable
+@Serializable
 
 data class ProblemGrades (
 

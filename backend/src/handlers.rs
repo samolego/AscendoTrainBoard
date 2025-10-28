@@ -272,7 +272,7 @@ pub async fn list_problems(
         .filter(|p| query.sector.as_ref().map_or(true, |s| p.sector_name == *s))
         .filter(|p| query.min_grade.map_or(true, |g| p.grade >= g))
         .filter(|p| query.max_grade.map_or(true, |g| p.grade <= g))
-        .filter(|p| query.author.as_ref().map_or(true, |a| p.created_by == *a))
+        .filter(|p| query.author.as_ref().map_or(true, |a| p.author == *a))
         .collect();
 
     let total = filtered.len() as u32;
@@ -350,7 +350,7 @@ pub async fn create_problem(
         id,
         name,
         description: payload.description,
-        created_by: username,
+        author: username,
         grade: payload.grade,
         sector_name: payload.sector_name,
         hold_sequence: payload.hold_sequence,
@@ -391,7 +391,7 @@ pub async fn update_problem(
     })?;
 
     let is_admin = state.is_admin(&username);
-    if problem.created_by != username && !is_admin {
+    if problem.author != username && !is_admin {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -461,7 +461,7 @@ pub async fn delete_problem(
     })?;
 
     let is_admin = state.is_admin(&username);
-    if problems[pos].created_by != username && !is_admin {
+    if problems[pos].author != username && !is_admin {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
