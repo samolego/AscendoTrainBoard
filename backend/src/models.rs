@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 // Settings (read-only, loaded on startup)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +40,19 @@ pub struct LoginResponse {
     pub username: String,
 }
 
+// Hold Type
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
+pub enum HoldType {
+    Start = 0,
+    Foot = 1,
+    Normal = 2,
+    End = 3,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Hold(pub u8, pub u8, pub HoldType);
+
 // Problem
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Problem {
@@ -48,7 +62,7 @@ pub struct Problem {
     pub created_by: String,
     pub grade: u8,
     pub sector_name: String,
-    pub hold_sequence: Vec<[u8; 2]>,
+    pub hold_sequence: Vec<Hold>,
     pub grades: Vec<Grade>,
     pub created_at: String,
     pub updated_at: String,
@@ -76,7 +90,7 @@ pub struct ProblemDetail {
     pub created_by: String,
     pub grade: u8,
     pub sector_name: String,
-    pub hold_sequence: Vec<[u8; 2]>,
+    pub hold_sequence: Vec<Hold>,
     pub average_grade: Option<f32>,
     pub average_stars: Option<f32>,
     pub created_at: String,
@@ -97,7 +111,7 @@ pub struct CreateProblemRequest {
     pub description: Option<String>,
     pub grade: u8,
     pub sector_name: String,
-    pub hold_sequence: Vec<[u8; 2]>,
+    pub hold_sequence: Vec<Hold>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -105,7 +119,7 @@ pub struct UpdateProblemRequest {
     pub name: Option<String>,
     pub description: Option<String>,
     pub grade: Option<u8>,
-    pub hold_sequence: Option<Vec<[u8; 2]>>,
+    pub hold_sequence: Option<Vec<Hold>>,
 }
 
 // Grade

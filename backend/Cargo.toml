@@ -8,6 +8,7 @@ axum = "0.8.6"
 tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread", "fs", "time"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
+serde_repr = "0.1.19"
 sha2 = "0.10.8"
 rand = "0.8.5"
 hex = "0.4.3"
