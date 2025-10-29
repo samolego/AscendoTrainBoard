@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val MIN_GRADE = 1
+private const val MAX_GRADE = 16
+
+
 data class ProblemListState(
     val problems: List<ProblemSummary> = emptyList(),
     val sectors: List<SectorSummary> = emptyList(),
@@ -21,8 +25,8 @@ data class ProblemListState(
     val currentPage: Int = 1,
     val hasMore: Boolean = true,
     val selectedSector: String? = null,
-    val minGrade: Int = 0,
-    val maxGrade: Int = 20,
+    val minGrade: Int = MIN_GRADE,
+    val maxGrade: Int = MAX_GRADE,
     val searchAuthor: String = ""
 )
 
@@ -162,8 +166,8 @@ class ProblemListViewModel(
         _state.update {
             it.copy(
                 selectedSector = null,
-                minGrade = 1,
-                maxGrade = 10,
+                minGrade = MIN_GRADE,
+                maxGrade = MAX_GRADE,
                 searchAuthor = ""
             )
         }
