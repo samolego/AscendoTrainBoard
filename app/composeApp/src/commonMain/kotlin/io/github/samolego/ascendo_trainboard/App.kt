@@ -9,7 +9,7 @@ import io.github.samolego.ascendo_trainboard.ui.problems.ProblemListViewModel
 @Composable
 fun App() {
     MaterialTheme {
-        val api = remember { AscendoApi(baseUrl = "http://localhost:3000/api/v1") }
+        val api = remember { AscendoApi(baseUrl = "${getPlatform().getHostname(true)}/api/v1") }
         val viewModel = remember { ProblemListViewModel(api) }
 
         ProblemListScreen(

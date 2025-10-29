@@ -24,36 +24,51 @@ impl AppState {
         sectors_path: PathBuf,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let settings_path = data_path.join("settings.json");
+        let default_settings = Settings {
+            ap_name: "AscendoTrainBoard".to_string(),
+            ap_password: "plezaj-gor".to_string(),
+            admin_users: vec!["admin".to_string()],
+        };
         let settings = if settings_path.exists() {
-            let data = tokio::fs::read_to_string(&settings_path).await?;
-            serde_json::from_str(&data)?
-        } else {
-            Settings {
-                ap_name: "AscendoTrainBoard".to_string(),
-                ap_password: "changeme".to_string(),
-                admin_users: vec!["admin".to_string()],
+            match tokio::fs::read_to_string(&settings_path).await {
+                Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| default_settings),
+                Err(e) => {
+                    eprintln!("Error reading settings.json: {e}");
+                    default_settings
+                }
             }
+        } else {
+            default_settings
         };
 
         let users_path = data_path.join("users.json");
         let users = if users_path.exists() {
-            let data = tokio::fs::read_to_string(&users_path).await?;
-            serde_json::from_str(&data)?
+            match tokio::fs::read_to_string(&users_path).await {
+                Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| Vec::new()),
+                Err(e) => {
+                    eprintln!("Error reading users.json: {e}");
+                    Vec::new()
+                }
+            }
         } else {
             Vec::new()
         };
 
         let problems_path = data_path.join("problems.json");
         let problems: Vec<Problem> = if problems_path.exists() {
-            let data = tokio::fs::read_to_string(&problems_path).await?;
-            serde_json::from_str(&data)?
+            match tokio::fs::read_to_string(&problems_path).await {
+                Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| Vec::new()),
+                Err(_) => Vec::new(),
+            }
         } else {
             Vec::new()
         };
 
         let next_id = problems.iter().map(|p| p.id).max().unwrap_or(0) + 1;
 
-        let (sectors, sector_metadata) = Self::load_sectors(&sectors_path).await?;
+        let (sectors, sector_metadata) = Self::load_sectors(&sectors_path)
+            .await
+            .unwrap_or_else(|_| (Vec::new(), std::collections::HashMap::new()));
 
         Ok(Self {
             settings,
@@ -140,11 +155,11 @@ impl AppState {
 
     pub async fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         let users = self.users.read().await;
-        let users_json = serde_json::to_string_pretty(&*users)?;
+        let users_json = serde_json::to_string(&*users)?;
         tokio::fs::write(self.data_path.join("users.json"), users_json).await?;
 
         let problems = self.problems.read().await;
-        let problems_json = serde_json::to_string_pretty(&*problems)?;
+        let problems_json = serde_json::to_string(&*problems)?;
         tokio::fs::write(self.data_path.join("problems.json"), problems_json).await?;
 
         Ok(())
