@@ -8,5 +8,5 @@ npx @openapitools/openapi-generator-cli generate \
   -o app/composeApp/ \
   --global-property models \
   --package-name io.github.samolego.ascendo_trainboard.api.generated \
-  --additional-properties=library=multiplatform,serializationLibrary=kotlinx_serialization,useCoroutines=true,dateLibrary=string
+  --additional-properties=library=multiplatform,useCoroutines=true,dateLibrary=string
 ```

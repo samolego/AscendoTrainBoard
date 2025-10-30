@@ -1,18 +1,24 @@
-package io.github.samolego.ascendo_trainboard.ui.problems
+package io.github.samolego.ascendo_trainboard.ui.problems.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
 import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val MIN_GRADE = 1
-private const val MAX_GRADE = 16
+const val MIN_GRADE = 1
+const val MAX_GRADE = 16
 
 
 data class ProblemListState(
@@ -30,6 +36,7 @@ data class ProblemListState(
     val searchAuthor: String = ""
 )
 
+@OptIn(FlowPreview::class)
 class ProblemListViewModel(
     private val api: AscendoApi
 ) : ViewModel() {
@@ -40,6 +47,15 @@ class ProblemListViewModel(
     init {
         loadSectors()
         loadProblems()
+
+        _state
+            .map { it.searchAuthor }
+            .distinctUntilChanged()
+            .debounce(500L)
+            .onEach {
+                loadProblems(refresh = true)
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun loadSectors() {
@@ -80,7 +96,7 @@ class ProblemListViewModel(
                 sector = _state.value.selectedSector,
                 minGrade = _state.value.minGrade,
                 maxGrade = _state.value.maxGrade,
-                author = _state.value.searchAuthor.ifBlank { null },
+                name = _state.value.searchAuthor.ifBlank { null },
                 page = 1,
                 perPage = 20
             )
@@ -119,7 +135,7 @@ class ProblemListViewModel(
                 sector = _state.value.selectedSector,
                 minGrade = _state.value.minGrade,
                 maxGrade = _state.value.maxGrade,
-                author = _state.value.searchAuthor.ifBlank { null },
+                name = _state.value.searchAuthor.ifBlank { null },
                 page = nextPage,
                 perPage = 20
             )
@@ -156,10 +172,6 @@ class ProblemListViewModel(
 
     fun setAuthorSearch(author: String) {
         _state.update { it.copy(searchAuthor = author) }
-    }
-
-    fun applyAuthorFilter() {
-        loadProblems(refresh = true)
     }
 
     fun clearFilters() {

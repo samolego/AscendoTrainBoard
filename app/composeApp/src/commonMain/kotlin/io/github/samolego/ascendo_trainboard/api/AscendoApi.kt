@@ -1,13 +1,32 @@
 package io.github.samolego.ascendo_trainboard.api
 
-import io.github.samolego.ascendo_trainboard.api.generated.models.*
-import io.ktor.client.*
-import io.ktor.client.call.*
+import io.github.samolego.ascendo_trainboard.api.generated.models.CreateProblemRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.Grade
+import io.github.samolego.ascendo_trainboard.api.generated.models.LoginRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
+import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemGrades
+import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemList
+import io.github.samolego.ascendo_trainboard.api.generated.models.RegisterRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
+import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import io.github.samolego.ascendo_trainboard.api.generated.models.SubmitGradeRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.User
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 /**
@@ -107,7 +126,7 @@ class AscendoApi(
         sector: String? = null,
         minGrade: Int? = null,
         maxGrade: Int? = null,
-        author: String? = null,
+        name: String? = null,
         page: Int = 1,
         perPage: Int = 20
     ): Result<ProblemList> {
@@ -116,7 +135,7 @@ class AscendoApi(
                 sector?.let { parameter("sector", it) }
                 minGrade?.let { parameter("min_grade", it) }
                 maxGrade?.let { parameter("max_grade", it) }
-                author?.let { parameter("author", it) }
+                name?.let { parameter("name", it) }
                 parameter("page", page)
                 parameter("per_page", perPage)
             }.body()

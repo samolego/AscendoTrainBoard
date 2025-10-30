@@ -256,7 +256,7 @@ pub struct ProblemQuery {
     pub sector: Option<String>,
     pub min_grade: Option<u8>,
     pub max_grade: Option<u8>,
-    pub author: Option<String>,
+    pub name: Option<String>,
     pub page: Option<u32>,
     pub per_page: Option<u32>,
 }
@@ -272,7 +272,11 @@ pub async fn list_problems(
         .filter(|p| query.sector.as_ref().map_or(true, |s| p.sector_name == *s))
         .filter(|p| query.min_grade.map_or(true, |g| p.grade >= g))
         .filter(|p| query.max_grade.map_or(true, |g| p.grade <= g))
-        .filter(|p| query.author.as_ref().map_or(true, |a| p.author == *a))
+        .filter(|p| {
+            query.name.as_ref().map_or(true, |name| {
+                p.name.to_lowercase().contains(&name.to_lowercase())
+            })
+        })
         .collect();
 
     let total = filtered.len() as u32;

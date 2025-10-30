@@ -1,4 +1,4 @@
-package io.github.samolego.ascendo_trainboard.ui.problems
+package io.github.samolego.ascendo_trainboard.ui.problems.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +18,6 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RangeSlider
@@ -48,18 +47,18 @@ fun FilterBar(
     onSectorSelected: (String?) -> Unit,
     onGradeRangeChanged: (Int, Int) -> Unit,
     onAuthorChanged: (String) -> Unit,
-    onAuthorSearch: () -> Unit,
     onClearFilters: () -> Unit,
     modifier: Modifier = Modifier
-) {
+)
+{
     var showAuthorSearch by remember { mutableStateOf(false) }
     var expandedSector by remember { mutableStateOf(false) }
 
-    var minGrade by remember(minGrade) { mutableStateOf(minGrade) }
-    var maxGrade by remember(maxGrade) { mutableStateOf(maxGrade) }
+    var selectedMinGrade by remember(minGrade) { mutableStateOf(minGrade) }
+    var selectedMaxGrade by remember(maxGrade) { mutableStateOf(maxGrade) }
 
-    var currentSliderRange by remember(minGrade, maxGrade) {
-        mutableStateOf(minGrade.toFloat()..maxGrade.toFloat())
+    var currentSliderRange by remember(selectedMinGrade, selectedMaxGrade) {
+        mutableStateOf(selectedMinGrade.toFloat()..selectedMaxGrade.toFloat())
     }
 
     Column(modifier = modifier) {
@@ -76,10 +75,10 @@ fun FilterBar(
                 modifier = Modifier.weight(1f)
             ) {
                 OutlinedTextField(
-                    value = selectedSector ?: "All Sectors",
+                    value = selectedSector ?: "Vsi sektorji",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Sector") },
+                    label = { Text("Sektor") },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSector)
                     },
@@ -93,7 +92,7 @@ fun FilterBar(
                     onDismissRequest = { expandedSector = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("All Sectors") },
+                        text = { Text("Vsi sektorji") },
                         onClick = {
                             onSectorSelected(null)
                             expandedSector = false
@@ -101,7 +100,7 @@ fun FilterBar(
                     )
                     sectors.forEach { sector ->
                         DropdownMenuItem(
-                            text = { Text("Sector ${sector.name}") },
+                            text = { Text(sector.name) },
                             onClick = {
                                 onSectorSelected(sector.name)
                                 expandedSector = false
@@ -123,7 +122,7 @@ fun FilterBar(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
             ) {
                 Text(
-                    text = "${getFrenchGrade(minGrade)} ≤ grade ≤ ${getFrenchGrade(maxGrade)}",
+                    text = "${getFrenchGrade(selectedMinGrade)} ≤ grade ≤ ${getFrenchGrade(selectedMaxGrade)}",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(4.dp)
                 )
@@ -133,8 +132,8 @@ fun FilterBar(
                 value = currentSliderRange,
                 onValueChange = { range ->
                     currentSliderRange = range
-                    minGrade = range.start.roundToInt()
-                    maxGrade = range.endInclusive.roundToInt()
+                    selectedMinGrade = range.start.roundToInt()
+                    selectedMaxGrade = range.endInclusive.roundToInt()
                 },
                 onValueChangeFinished = {
                     onGradeRangeChanged(
@@ -160,11 +159,9 @@ fun FilterBar(
                 OutlinedTextField(
                     value = searchAuthor,
                     onValueChange = onAuthorChanged,
-                    placeholder = { Text("Author name") },
+                    placeholder = { Text("Ime smeri") },
                     trailingIcon = {
-                        IconButton(onClick = onAuthorSearch) {
-                            Icon(Icons.Default.Search, contentDescription = "Search")
-                        }
+                        Icon(Icons.Default.Search, contentDescription = "Išči")
                     },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
@@ -175,18 +172,18 @@ fun FilterBar(
                 ) {
                     Icon(Icons.Default.Search, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Search by author")
+                    Text("Išči po imenu")
                 }
             }
 
-            if (selectedSector != null || minGrade != 1 || maxGrade != 10 || searchAuthor.isNotBlank()) {
+            if (selectedSector != null || selectedMinGrade != MIN_GRADE || selectedMaxGrade != MAX_GRADE || searchAuthor.isNotBlank()) {
                 TextButton(onClick = {
                     onClearFilters()
                     showAuthorSearch = false
                 }) {
                     Icon(Icons.Default.Clear, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Clear")
+                    Text("Počisti")
                 }
             }
         }
@@ -206,7 +203,6 @@ private fun PreviewFilterBar() {
         onSectorSelected = {},
         onGradeRangeChanged = { _, _ -> },
         onAuthorChanged = {},
-        onAuthorSearch = {},
         onClearFilters = {}
     )
 }

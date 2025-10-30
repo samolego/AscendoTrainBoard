@@ -210,12 +210,12 @@ paths:
           schema:
             type: integer
           description: Filter by maximum grade
-        - name: author
+        - name: name
           in: query
           required: false
           schema:
             type: string
-          description: Filter by author username
+          description: Filter by problem name
         - name: page
           in: query
           required: false

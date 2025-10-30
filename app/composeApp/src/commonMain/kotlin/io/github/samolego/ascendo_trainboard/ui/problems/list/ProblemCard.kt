@@ -1,4 +1,4 @@
-package io.github.samolego.ascendo_trainboard.ui.problems
+package io.github.samolego.ascendo_trainboard.ui.problems.list
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +45,7 @@ fun ProblemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = problem.name ?: "Problem #${problem.id}",
+                    text = problem.name ?: "Balvan #${problem.id}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -70,12 +70,12 @@ fun ProblemCard(
             // Metadata row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // Author
                 Column {
                     Text(
-                        text = "By",
+                        text = "Avtor",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -88,7 +88,7 @@ fun ProblemCard(
                 // Sector
                 Column {
                     Text(
-                        text = "Sector",
+                        text = "Sektor",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -102,11 +102,12 @@ fun ProblemCard(
                 problem.averageStars?.let { stars ->
                     Column {
                         Text(
-                            text = "Rating",
+                            text = "Mnenje",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
+                            modifier = Modifier.align(Alignment.End),
                             text = "⭐ ${stars.toString().take(3)}",
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -117,13 +118,13 @@ fun ProblemCard(
                 problem.averageGrade?.let { grade ->
                     Column {
                         Text(
-                            text = "Avg Grade",
+                            text = "Povp. ocena",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
+                            modifier = Modifier.align(Alignment.End),
                             text = getFrenchGrade(grade.roundToInt()),
-
                             style = MaterialTheme.typography.labelMedium,
                         )
                     }
@@ -157,6 +158,20 @@ private fun ProblemCardPreview() {
             sectorName = "Podest",
             averageStars = 3.24f,
             averageGrade = 18.23f,
+        )
+    )
+}
+
+@Preview
+@Composable
+private fun ProblemCardPreviewMini() {
+    ProblemCard(
+        onClick = {},
+        problem = ProblemSummary(
+            id = 2,
+            author = "samolego",
+            grade = 20,
+            sectorName = "Podest",
         )
     )
 }

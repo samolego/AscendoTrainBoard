@@ -1,4 +1,4 @@
-package io.github.samolego.ascendo_trainboard.ui.problems
+package io.github.samolego.ascendo_trainboard.ui.problems.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -87,9 +87,8 @@ fun ProblemListScreen(
                 onSectorSelected = viewModel::setSectorFilter,
                 onGradeRangeChanged = viewModel::setGradeRange,
                 onAuthorChanged = viewModel::setAuthorSearch,
-                onAuthorSearch = viewModel::applyAuthorFilter,
                 onClearFilters = viewModel::clearFilters,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             HorizontalDivider()
@@ -172,13 +171,13 @@ fun EmptyState(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "No problems found",
+            text = "Ni najdenih smeri ...",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Try adjusting your filters",
+            text = "Poskusi olajšati filtre",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

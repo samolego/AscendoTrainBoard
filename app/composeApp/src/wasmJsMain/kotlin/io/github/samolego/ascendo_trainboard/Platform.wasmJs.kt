@@ -5,7 +5,7 @@ import kotlinx.browser.window
 class WasmPlatform : Platform {
     override val name: String = "Web with Kotlin/Wasm"
 
-    override fun getHostname(debug: Boolean) =
+    override fun baseUrl(debug: Boolean) =
         if (debug) {
             "${window.location.protocol}//${window.location.hostname}:3000"
         } else {
