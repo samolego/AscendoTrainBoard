@@ -14,11 +14,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
+import androidx.navigation.toRoute
 import io.github.samolego.ascendo_trainboard.getPlatform
-import io.github.samolego.ascendo_trainboard.ui.problems.create.CreateProblemScreen
-import io.github.samolego.ascendo_trainboard.ui.problems.create.CreateProblemViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsScreen
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsViewModel
+import io.github.samolego.ascendo_trainboard.ui.problems.edit.EditProblemScreen
 import io.github.samolego.ascendo_trainboard.ui.problems.list.ProblemListScreen
 import io.github.samolego.ascendo_trainboard.ui.problems.list.ProblemListViewModel
 
@@ -28,7 +28,6 @@ fun AppNavigation(
     navController: NavHostController,
     onNavHostReady: suspend (NavController) -> Unit = {},
     problemListViewModel: ProblemListViewModel,
-    createProblemViewModel: CreateProblemViewModel,
     problemDetailsViewModel: ProblemDetailsViewModel
 ) {
     val baseUrl = getPlatform().baseUrl(false)
@@ -55,11 +54,14 @@ fun AppNavigation(
         }
 
         composable<ProblemDetails>(
-            deepLinks = listOf(navDeepLink { uriPattern = "$baseUrl/problems/{id}" }),
+            deepLinks = listOf(navDeepLink { uriPattern = "$baseUrl/problems/details/{problemId}" }),
             enterTransition = { fadeIn(animationSpec = tween(150)) },
             exitTransition = { fadeOut(animationSpec = tween(150)) },
         ) {
+            val problemId = it.toRoute<ProblemDetails>().problemId
+            problemDetailsViewModel.setProblem(problemId)
             ProblemDetailsScreen(
+                problemId = problemId,
                 viewModel = problemDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
             )
@@ -71,8 +73,8 @@ fun AppNavigation(
             enterTransition = { fadeIn(animationSpec = tween(150)) },
             exitTransition = { fadeOut(animationSpec = tween(150)) }
         ) {
-            CreateProblemScreen(
-                viewModel = createProblemViewModel,
+            EditProblemScreen(
+                viewModel = problemDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
             )
         }

@@ -51,7 +51,7 @@ pub enum HoldType {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct Hold(pub u8, pub u8, pub HoldType);
+pub struct Hold(pub u16, pub HoldType);
 
 // Problem
 #[derive(Debug, Clone, Serialize, Deserialize)]

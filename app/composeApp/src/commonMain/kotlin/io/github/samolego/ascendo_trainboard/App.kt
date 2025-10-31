@@ -7,7 +7,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
 import io.github.samolego.ascendo_trainboard.ui.navigation.AppNavigation
-import io.github.samolego.ascendo_trainboard.ui.problems.create.CreateProblemViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.list.ProblemListViewModel
 
@@ -18,7 +17,6 @@ fun App(
     MaterialTheme {
         val api = remember { AscendoApi(baseUrl = "${getPlatform().baseUrl(true)}/api/v1") }
         val problemListViewModel = remember { ProblemListViewModel(api) }
-        val createProblemViewModel = remember { CreateProblemViewModel(api) }
         val problemDetailsViewModel = remember { ProblemDetailsViewModel(api) }
 
 
@@ -27,7 +25,6 @@ fun App(
         AppNavigation(
             navController = navController,
             problemListViewModel = problemListViewModel,
-            createProblemViewModel = createProblemViewModel,
             problemDetailsViewModel = problemDetailsViewModel,
             onNavHostReady = onNavHostReady,
         )

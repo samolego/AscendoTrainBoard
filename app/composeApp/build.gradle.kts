@@ -61,6 +61,10 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+
+            // Coil async image
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

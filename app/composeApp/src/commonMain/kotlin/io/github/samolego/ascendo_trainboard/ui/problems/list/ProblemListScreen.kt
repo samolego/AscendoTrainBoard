@@ -4,24 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +26,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
+import io.github.samolego.ascendo_trainboard.ui.components.ErrorBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,29 +88,10 @@ fun ProblemListScreen(
 
             // Error Banner
             if (state.error != null) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = state.error ?: "",
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = viewModel::clearError) {
-                            Icon(Icons.Default.Clear, contentDescription = "Dismiss")
-                        }
-                    }
-                }
+                ErrorBanner(
+                    errorMessage = state.error!!,
+                    onDismiss =  viewModel::clearError
+                )
             }
 
             // Problem List
@@ -128,7 +102,9 @@ fun ProblemListScreen(
                     )
                 } else if (!state.isLoading && state.problems.isEmpty()) {
                     EmptyState(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        titleMessage = "Ni najdenih smeri",
+                        subtitleMessage = "Poskusi olajšati filtre ..."
                     )
                 } else {
                     LazyColumn(
@@ -160,26 +136,5 @@ fun ProblemListScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun EmptyState(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Ni najdenih smeri ...",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Poskusi olajšati filtre",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }

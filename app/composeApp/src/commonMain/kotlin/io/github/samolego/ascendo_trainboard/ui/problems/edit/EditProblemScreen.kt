@@ -1,4 +1,4 @@
-package io.github.samolego.ascendo_trainboard.ui.problems.create
+package io.github.samolego.ascendo_trainboard.ui.problems.edit
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,11 +11,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateProblemScreen(
-    viewModel: CreateProblemViewModel,
+fun EditProblemScreen(
+    viewModel: ProblemDetailsViewModel,
     onNavigateBack: () -> Unit,
 ) {
     Scaffold(

@@ -110,16 +110,16 @@ class AscendoApi(
         }
     }
 
-    suspend fun getSector(id: Int): Result<Sector> {
+    suspend fun getSector(name: String): Result<Sector> {
         return try {
-            val response: Sector = client.get("$baseUrl/sectors/$id").body()
+            val response: Sector = client.get("$baseUrl/sectors/$name").body()
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun getSectorImageUrl(id: Int): String = "$baseUrl/sectors/$id/image"
+    fun getSectorImageUrl(name: Int): String = "$baseUrl/sectors/$name/image"
 
     // Problem endpoints
     suspend fun getProblems(

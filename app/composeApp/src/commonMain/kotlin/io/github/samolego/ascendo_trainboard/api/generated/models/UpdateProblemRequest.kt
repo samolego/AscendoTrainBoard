@@ -26,7 +26,7 @@ import kotlinx.serialization.encoding.*
  * @param name 
  * @param description 
  * @param grade 
- * @param holdSequence Array of [row, col, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)
+ * @param holdSequence Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)
  */
 @Serializable
 
@@ -38,7 +38,7 @@ data class UpdateProblemRequest (
 
     @SerialName(value = "grade") val grade: kotlin.Int? = null,
 
-    /* Array of [row, col, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End) */
+    /* Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End) */
     @SerialName(value = "hold_sequence") val holdSequence: kotlin.collections.List<kotlin.collections.List<kotlin.Int>>? = null
 
 ) {
