@@ -84,7 +84,7 @@ fun ProblemDetailsScreen(
                             modifier = Modifier.fillMaxSize(),
                             problem = state.problem!!,
                             sector = state.sector!!,
-                            imageUrl = "http://localhost:3000/api/v1/sectors/${state.sector!!.name}/image"//api.getSectorImageUrl(state.sector!!.name)
+                            imageUrl = viewModel.getSectorImageUrl(state.sector!!.name)
                         )
                     }
                 }

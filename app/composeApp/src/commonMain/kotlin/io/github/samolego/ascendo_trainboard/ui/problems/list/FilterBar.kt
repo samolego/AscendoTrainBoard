@@ -122,7 +122,7 @@ fun FilterBar(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
             ) {
                 Text(
-                    text = "${getFrenchGrade(selectedMinGrade)} ≤ grade ≤ ${getFrenchGrade(selectedMaxGrade)}",
+                    text = "${getFrenchGrade(selectedMinGrade)} ≤ ocena ≤ ${getFrenchGrade(selectedMaxGrade)}",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(4.dp)
                 )

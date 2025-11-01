@@ -84,4 +84,7 @@ class ProblemDetailsViewModel(
             loadProblem(refresh = true)
         }
     }
+
+    fun getSectorImageUrl(sectorName: String): String =
+        api.getSectorImageUrl(sectorName)
 }

@@ -119,7 +119,7 @@ class AscendoApi(
         }
     }
 
-    fun getSectorImageUrl(name: Int): String = "$baseUrl/sectors/$name/image"
+    fun getSectorImageUrl(name: String): String = "$baseUrl/sectors/$name/image"
 
     // Problem endpoints
     suspend fun getProblems(

@@ -28,7 +28,7 @@ fun ProblemCard(
     problem: ProblemSummary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-) {
+) {  // todo - fix hovering; hover isn't rounded shape
     Card(
         modifier = modifier
             .fillMaxWidth()
