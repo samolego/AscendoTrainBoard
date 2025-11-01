@@ -37,10 +37,9 @@ fun SectorProblemImage(
     interactive: Boolean = true,
 ) {
     var origImgSize by remember { mutableStateOf(IntSize.Zero) }
-    var resizedImgSize by remember { mutableStateOf(IntSize.Zero) }
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
     val holdRects = remember(sector.holds) {
-        println("Sector holds: ${sector.holds}")
         sector.holds.map { rect ->
             Rect(
                 left = rect[0].toFloat(),
@@ -60,11 +59,7 @@ fun SectorProblemImage(
     ) {
         AsyncImage(
             modifier = Modifier
-                .fillMaxWidth()
-                .onSizeChanged {
-                    //resizedImgSize = it
-                    println("Image size: $it")
-                },
+                .fillMaxWidth(),
             onSuccess = {
                 origImgSize = IntSize(it.result.image.width, it.result.image.height)
                 println("Success! Size: $origImgSize")
@@ -74,7 +69,6 @@ fun SectorProblemImage(
                 println("Error: ${it.result.request.data}")
             },
             model = sectorImageUrl,
-            //contentScale = ContentScale.None,
             contentDescription = "Image of sector ${sector.name}.",
         )
 
@@ -82,24 +76,39 @@ fun SectorProblemImage(
         Canvas(
             modifier = Modifier
                 .matchParentSize()
-                .apply {
+                .onSizeChanged {
+                    canvasSize = it
+                    println("Canvas size: $it")
+                }
+                .then(
                     if (interactive) {
-                        pointerInput(sector.holds, resizedImgSize) {
-                            println("Poinrt in")
+                        Modifier.pointerInput(holdRects, origImgSize, canvasSize) {
                             detectTapGestures { offset ->
-                                println("Tap detected: $offset")
-                                val clickedIndex = holdRects.indexOfFirst { it.contains(offset) }
-                                if (clickedIndex != -1) {
-                                    val hold = sector.holds[clickedIndex]
-                                    println(hold)
+                                println("Tap detected at: $offset")
+                                if (origImgSize.width > 0 && canvasSize.width > 0) {
+                                    val scale = canvasSize.width.toFloat() / origImgSize.width.toFloat()
+                                    val clickedIndex = holdRects.indexOfFirst { rect ->
+                                        val scaledRect = Rect(
+                                            left = rect.left * scale,
+                                            top = rect.top * scale,
+                                            right = rect.right * scale,
+                                            bottom = rect.bottom * scale
+                                        )
+                                        scaledRect.contains(offset)
+                                    }
+                                    if (clickedIndex != -1) {
+                                        val hold = sector.holds[clickedIndex]
+                                        println("Hold clicked: $hold")
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        Modifier
                     }
-                }
+                )
         ) {
             val scale = size.width / origImgSize.width
-            //val scaleY = size.height / origImgSize.height
 
             val markHold = { rect: Rect, color: Color ->
                 val scaledRect = Rect(
