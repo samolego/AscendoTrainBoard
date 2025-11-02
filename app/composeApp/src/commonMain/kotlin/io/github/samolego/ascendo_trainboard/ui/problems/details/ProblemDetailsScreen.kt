@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
-import io.github.samolego.ascendo_trainboard.ui.components.SectorProblemImage
+import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +104,7 @@ fun ProblemDetails(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        SectorProblemImage(
+        ZoomableSectorProblemImage(
             sectorImageUrl = imageUrl,
             sector = sector,
             problem = problem,

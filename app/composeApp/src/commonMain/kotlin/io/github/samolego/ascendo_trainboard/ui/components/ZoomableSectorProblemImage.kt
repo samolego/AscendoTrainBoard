@@ -22,7 +22,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.TransformOrigin
+
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -35,7 +35,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 
 
 @Composable
-fun SectorProblemImage(
+fun ZoomableSectorProblemImage(
     sectorImageUrl: String,
     sector: Sector,
     problem: Problem,
@@ -98,17 +98,17 @@ fun SectorProblemImage(
                                 // Only apply pan constraints when zoomed in
                                 if (zoom > 1f) {
                                     // Calculate bounds to prevent white space
+                                    // When scaled from center, the image can move in both directions
                                     val scaledWidth = canvasSize.width * zoom
                                     val scaledHeight = canvasSize.height * zoom
 
-                                    val maxOffsetX = 0f
-                                    val minOffsetX = canvasSize.width - scaledWidth
-                                    val maxOffsetY = 0f
-                                    val minOffsetY = canvasSize.height - scaledHeight
+                                    // Maximum distance we can pan is half the difference between scaled and canvas size
+                                    val maxPanX = (scaledWidth - canvasSize.width) / 2f
+                                    val maxPanY = (scaledHeight - canvasSize.height) / 2f
 
-                                    // Clamp offsets to bounds
-                                    zoomOffsetX = newOffsetX.coerceIn(minOffsetX, maxOffsetX)
-                                    zoomOffsetY = newOffsetY.coerceIn(minOffsetY, maxOffsetY)
+                                    // Clamp offsets to bounds (symmetric around center)
+                                    zoomOffsetX = newOffsetX.coerceIn(-maxPanX, maxPanX)
+                                    zoomOffsetY = newOffsetY.coerceIn(-maxPanY, maxPanY)
                                 } else {
                                     // When zoom <= 1, reset to center/no offset
                                     zoomOffsetX = 0f
@@ -129,8 +129,12 @@ fun SectorProblemImage(
                         if (origImgSize.width > 0 && canvasSize.width > 0) {
                             val imageScale = canvasSize.width.toFloat() / origImgSize.width.toFloat()
 
-                            val adjustedX = (tapPosition.x - zoomOffsetX) / zoom
-                            val adjustedY = (tapPosition.y - zoomOffsetY) / zoom
+                            // Account for center-based zoom transformation
+                            val centerX = canvasSize.width / 2f
+                            val centerY = canvasSize.height / 2f
+
+                            val adjustedX = ((tapPosition.x - centerX - zoomOffsetX) / zoom) + centerX
+                            val adjustedY = ((tapPosition.y - centerY - zoomOffsetY) / zoom) + centerY
                             val adjustedTapPosition = Offset(adjustedX, adjustedY)
 
                             val clickedIndex = holdRects.indexOfFirst { rect ->
@@ -159,8 +163,7 @@ fun SectorProblemImage(
                     scaleX = zoom,
                     scaleY = zoom,
                     translationX = zoomOffsetX,
-                    translationY = zoomOffsetY,
-                    transformOrigin = TransformOrigin(0f, 0f)
+                    translationY = zoomOffsetY
                 ),
             onSuccess = {
                 origImgSize = IntSize(it.result.image.width, it.result.image.height)
@@ -182,8 +185,7 @@ fun SectorProblemImage(
                     scaleX = zoom,
                     scaleY = zoom,
                     translationX = zoomOffsetX,
-                    translationY = zoomOffsetY,
-                    transformOrigin = TransformOrigin(0f, 0f)
+                    translationY = zoomOffsetY
                 )
                 .onSizeChanged {
                     canvasSize = it
