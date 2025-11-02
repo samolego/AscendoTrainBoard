@@ -1,7 +1,10 @@
 package io.github.samolego.ascendo_trainboard.ui.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,7 +22,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
@@ -39,6 +44,11 @@ fun SectorProblemImage(
     var origImgSize by remember { mutableStateOf(IntSize.Zero) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
+    var zoom by remember { mutableStateOf(1f) }
+    var zoomOffsetX by remember { mutableStateOf(0f) }
+    var zoomOffsetY by remember { mutableStateOf(0f) }
+
+
     val holdRects = remember(sector.holds) {
         sector.holds.map { rect ->
             Rect(
@@ -56,10 +66,102 @@ fun SectorProblemImage(
             .padding(8.dp)
             .clip(RoundedCornerShape(8.dp))
             .shadow(elevation = 8.dp)
+            .pointerInput(interactive, holdRects, origImgSize, canvasSize) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val downPosition = down.position
+                    var totalPan = Offset.Zero
+                    var totalZoom = 1f
+                    var wasMultiTouch = false
+
+                    do {
+                        val event = awaitPointerEvent()
+                        val canceled = event.changes.any { it.isConsumed }
+
+                        if (!canceled) {
+                            if (event.changes.size > 1) {
+                                wasMultiTouch = true
+                            }
+
+                            val zoomChange = event.calculateZoom()
+                            val panChange = event.calculatePan()
+
+                            totalZoom *= zoomChange
+                            totalPan += panChange
+
+                            if (zoomChange != 1f || panChange != Offset.Zero) {
+                                zoom *= zoomChange
+
+                                val newOffsetX = zoomOffsetX + panChange.x
+                                val newOffsetY = zoomOffsetY + panChange.y
+
+                                // Only apply pan constraints when zoomed in
+                                if (zoom > 1f) {
+                                    // Calculate bounds to prevent white space
+                                    val scaledWidth = canvasSize.width * zoom
+                                    val scaledHeight = canvasSize.height * zoom
+
+                                    val maxOffsetX = 0f
+                                    val minOffsetX = canvasSize.width - scaledWidth
+                                    val maxOffsetY = 0f
+                                    val minOffsetY = canvasSize.height - scaledHeight
+
+                                    // Clamp offsets to bounds
+                                    zoomOffsetX = newOffsetX.coerceIn(minOffsetX, maxOffsetX)
+                                    zoomOffsetY = newOffsetY.coerceIn(minOffsetY, maxOffsetY)
+                                } else {
+                                    // When zoom <= 1, reset to center/no offset
+                                    zoomOffsetX = 0f
+                                    zoomOffsetY = 0f
+                                    zoom = 1f
+                                }
+
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    } while (event.changes.any { it.pressed })
+
+                    val movement = totalPan.getDistance()
+
+                    if (interactive && !wasMultiTouch && movement < 10f && totalZoom == 1f) {
+                        val tapPosition = downPosition
+
+                        if (origImgSize.width > 0 && canvasSize.width > 0) {
+                            val imageScale = canvasSize.width.toFloat() / origImgSize.width.toFloat()
+
+                            val adjustedX = (tapPosition.x - zoomOffsetX) / zoom
+                            val adjustedY = (tapPosition.y - zoomOffsetY) / zoom
+                            val adjustedTapPosition = Offset(adjustedX, adjustedY)
+
+                            val clickedIndex = holdRects.indexOfFirst { rect ->
+                                val scaledRect = Rect(
+                                    left = rect.left * imageScale,
+                                    top = rect.top * imageScale,
+                                    right = rect.right * imageScale,
+                                    bottom = rect.bottom * imageScale
+                                )
+                                scaledRect.contains(adjustedTapPosition)
+                            }
+
+                            if (clickedIndex != -1) {
+                                val hold = sector.holds[clickedIndex]
+                                println("Hold clicked: $hold")
+                            }
+                        }
+                    }
+                }
+            }
     ) {
         AsyncImage(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .graphicsLayer(
+                    scaleX = zoom,
+                    scaleY = zoom,
+                    translationX = zoomOffsetX,
+                    translationY = zoomOffsetY,
+                    transformOrigin = TransformOrigin(0f, 0f)
+                ),
             onSuccess = {
                 origImgSize = IntSize(it.result.image.width, it.result.image.height)
                 println("Success! Size: $origImgSize")
@@ -76,37 +178,17 @@ fun SectorProblemImage(
         Canvas(
             modifier = Modifier
                 .matchParentSize()
+                .graphicsLayer(
+                    scaleX = zoom,
+                    scaleY = zoom,
+                    translationX = zoomOffsetX,
+                    translationY = zoomOffsetY,
+                    transformOrigin = TransformOrigin(0f, 0f)
+                )
                 .onSizeChanged {
                     canvasSize = it
                     println("Canvas size: $it")
                 }
-                .then(
-                    if (interactive) {
-                        Modifier.pointerInput(holdRects, origImgSize, canvasSize) {
-                            detectTapGestures { offset ->
-                                println("Tap detected at: $offset")
-                                if (origImgSize.width > 0 && canvasSize.width > 0) {
-                                    val scale = canvasSize.width.toFloat() / origImgSize.width.toFloat()
-                                    val clickedIndex = holdRects.indexOfFirst { rect ->
-                                        val scaledRect = Rect(
-                                            left = rect.left * scale,
-                                            top = rect.top * scale,
-                                            right = rect.right * scale,
-                                            bottom = rect.bottom * scale
-                                        )
-                                        scaledRect.contains(offset)
-                                    }
-                                    if (clickedIndex != -1) {
-                                        val hold = sector.holds[clickedIndex]
-                                        println("Hold clicked: $hold")
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        Modifier
-                    }
-                )
         ) {
             val scale = size.width / origImgSize.width
 
