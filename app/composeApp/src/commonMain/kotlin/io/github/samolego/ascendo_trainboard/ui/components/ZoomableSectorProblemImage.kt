@@ -247,7 +247,7 @@ fun ZoomableSectorProblemImage(
                         bottom = sectorHold[3].toFloat()
                     )
 
-                    markHold(rect, color, index == selectedHold?.holdIndex)
+                    markHold(rect, color, index == selectedHold?.holdIndex && interactive)
                 }
             }
         }

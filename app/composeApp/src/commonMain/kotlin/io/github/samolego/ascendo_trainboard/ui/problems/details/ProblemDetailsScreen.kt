@@ -156,18 +156,21 @@ fun ProblemDetails(
             sector = sector,
             holds = holds,
             onHoldClicked = { holdIndex ->
-                selectedHold = getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, HoldType.NORMAL)
-
-                onHoldUpdated(holdIndex, ProblemHold(holdIndex, selectedHold!!.holdType))
+                if (selectedHold?.holdIndex == holdIndex) {
+                    onHoldRemoved(holdIndex)
+                    selectedHold = null
+                } else {
+                    selectedHold = getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, HoldType.NORMAL)
+                    onHoldUpdated(holdIndex, ProblemHold(holdIndex, selectedHold!!.holdType))
+                }
             },
             selectedHold = selectedHold,
             interactive = editable,
         )
         Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
         ) {
-            Text("Avtor")
             Text(
                 text = problem.author,
                 style = MaterialTheme.typography.bodyMedium,
@@ -191,8 +194,9 @@ fun ProblemDetails(
                 }
             }
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 HoldType.entries.forEach {
                     val text = it.getTypeName()
@@ -201,25 +205,23 @@ fun ProblemDetails(
                             .selectable(
                                 selected = (it == selectedHold!!.holdType),
                                 onClick = {
-                                    onHoldUpdated(
-                                        selectedHold!!.holdIndex,
-                                        ProblemHold(selectedHold!!.holdIndex, it)
-                                    )
+                                    val updatedHold = ProblemHold(selectedHold!!.holdIndex, it)
+                                    onHoldUpdated(selectedHold!!.holdIndex, updatedHold)
+                                    selectedHold = updatedHold
                                 },
                                 role = Role.RadioButton
                             )
-                            .padding(horizontal = 16.dp),
-                        //horizontalArrangement = Arrangement.SpaceAround,
+                            .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(
                             selected = (it == selectedHold!!.holdType),
-                            onClick = null // null recommended for accessibility with screen readers
+                            onClick = null
                         )
                         Text(
                             text = text,
                             style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 16.dp)
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }
