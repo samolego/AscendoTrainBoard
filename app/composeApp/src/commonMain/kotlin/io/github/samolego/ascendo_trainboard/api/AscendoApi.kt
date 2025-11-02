@@ -55,7 +55,7 @@ class AscendoApi(
     }
 
     private var authToken: String? = null
-    var user: String? = "samolego" // todo
+    var username: String? = null
 
     // Auth endpoints
     suspend fun register(username: String, password: String): Result<User> {
@@ -72,7 +72,7 @@ class AscendoApi(
         }
     }
 
-    suspend fun login(username: String, password: String): Result<Pair<String, String>> {
+    suspend fun login(username: String, password: String): Result<LoginResponse> {
         return try {
             val response: LoginResponse = client.post("$baseUrl/auth/login") {
                 contentType(ContentType.Application.Json)
@@ -80,8 +80,8 @@ class AscendoApi(
             }.body()
 
             authToken = response.token
-            user = response.username
-            Result.success(Pair("token", username))
+            this@AscendoApi.username = response.username
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -93,6 +93,7 @@ class AscendoApi(
                 authToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
             }
             authToken = null
+            username = null
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

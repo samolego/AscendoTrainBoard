@@ -62,7 +62,7 @@ class ProblemDetailsViewModel(
                             problem = problem,
                             sector = sector,
                             isLoading = false,
-                            canEdit = api.user == problem.author,
+                            canEdit = api.username == problem.author,
                         )
                     }
                 }.onFailure { error ->

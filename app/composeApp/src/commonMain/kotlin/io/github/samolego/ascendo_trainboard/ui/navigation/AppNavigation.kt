@@ -16,6 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import io.github.samolego.ascendo_trainboard.getPlatform
+import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationScreen
+import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsScreen
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.edit.EditProblemScreen
@@ -28,7 +30,8 @@ fun AppNavigation(
     navController: NavHostController,
     onNavHostReady: suspend (NavController) -> Unit = {},
     problemListViewModel: ProblemListViewModel,
-    problemDetailsViewModel: ProblemDetailsViewModel
+    problemDetailsViewModel: ProblemDetailsViewModel,
+    authViewModel: AuthenticationViewModel,
 ) {
     val baseUrl = getPlatform().baseUrl(false)
 
@@ -47,8 +50,8 @@ fun AppNavigation(
         ) {
             ProblemListScreen(
                 viewModel = problemListViewModel,
-                onProblemClick = {
-                    navController.navigate(ProblemDetails(it))
+                onNavigateTo = {
+                    navController.navigate(it)
                 }
             )
         }
@@ -92,6 +95,20 @@ fun AppNavigation(
             EditProblemScreen(
                 viewModel = problemDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
+            )
+        }
+
+        composable<Authenticate>(
+            deepLinks =
+                listOf(navDeepLink { uriPattern = "$baseUrl/auth" }),
+            enterTransition = { fadeIn(animationSpec = tween(150)) },
+            exitTransition = { fadeOut(animationSpec = tween(150)) }
+        ) {
+            AuthenticationScreen(
+                viewModel = authViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
     }

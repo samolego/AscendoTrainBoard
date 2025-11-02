@@ -4,26 +4,25 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-@SerialName("auth/login")
-data object Login
+@SerialName("auth")
+data object Authenticate: Route
 
-@Serializable
-@SerialName("auth/register")
-data object Register
 
 
 @Serializable
 @SerialName("problems")
-data object Problems
+data object Problems: Route
 
 @Serializable
 @SerialName("problems/create")
-data object CreateProblem
+data object CreateProblem : Route
 
 @Serializable
 @SerialName("problems/details")
-data class ProblemDetails(val problemId: Int)
+data class ProblemDetails(val problemId: Int): Route
 
 @Serializable
 @SerialName("problems/edit")
-data class EditProblem(val problemId: Int)
+data class EditProblem(val problemId: Int): Route
+
+interface Route

@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
+import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationViewModel
 import io.github.samolego.ascendo_trainboard.ui.navigation.AppNavigation
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.list.ProblemListViewModel
@@ -18,15 +19,16 @@ fun App(
         val api = remember { AscendoApi(baseUrl = "${getPlatform().baseUrl(true)}/api/v1") }
         val problemListViewModel = remember { ProblemListViewModel(api) }
         val problemDetailsViewModel = remember { ProblemDetailsViewModel(api) }
-
+        val authViewModel = remember { AuthenticationViewModel(api) }
 
         val navController = rememberNavController()
 
         AppNavigation(
             navController = navController,
+            onNavHostReady = onNavHostReady,
             problemListViewModel = problemListViewModel,
             problemDetailsViewModel = problemDetailsViewModel,
-            onNavHostReady = onNavHostReady,
+            authViewModel = authViewModel,
         )
     }
 }
