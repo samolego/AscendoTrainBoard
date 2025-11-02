@@ -3,6 +3,7 @@ package io.github.samolego.ascendo_trainboard.api
 import io.github.samolego.ascendo_trainboard.api.generated.models.CreateProblemRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.Grade
 import io.github.samolego.ascendo_trainboard.api.generated.models.LoginRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.LoginResponse
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemGrades
 import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemList
@@ -54,6 +55,7 @@ class AscendoApi(
     }
 
     private var authToken: String? = null
+    var user: String? = "samolego" // todo
 
     // Auth endpoints
     suspend fun register(username: String, password: String): Result<User> {
@@ -72,16 +74,13 @@ class AscendoApi(
 
     suspend fun login(username: String, password: String): Result<Pair<String, String>> {
         return try {
-            val response = client.post("$baseUrl/auth/login") {
+            val response: LoginResponse = client.post("$baseUrl/auth/login") {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequest(username = username, password = password))
-            }
+            }.body()
 
-            // Extract token from response body (adjust based on actual response)
-            val body: String = response.body()
-            // Parse token and username from response
-            // This is a simplified version - adjust based on actual backend response
-            authToken = "extracted_token" // TODO: Parse from response
+            authToken = response.token
+            user = response.username
             Result.success(Pair("token", username))
         } catch (e: Exception) {
             Result.failure(e)

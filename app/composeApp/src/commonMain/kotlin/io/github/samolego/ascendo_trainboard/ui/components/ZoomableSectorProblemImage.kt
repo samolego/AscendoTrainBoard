@@ -7,7 +7,6 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,7 +21,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -30,7 +28,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
+import coil3.compose.AsyncImagePainter
+import io.github.samolego.ascendo_trainboard.api.ProblemHold
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 
 
@@ -38,8 +37,12 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 fun ZoomableSectorProblemImage(
     sectorImageUrl: String,
     sector: Sector,
-    problem: Problem,
-    interactive: Boolean = true,
+    holds: Collection<ProblemHold>,
+    interactive: Boolean = false,
+    onImageLoadError: (AsyncImagePainter.State.Error) -> Unit = {},
+    onHoldClicked: (holdIndex: Int) -> Unit = {},
+    onHoldLongClicked: (holdIndex: Int) -> Unit = {},
+    selectedHold: ProblemHold?,
 ) {
     var origImgSize by remember { mutableStateOf(IntSize.Zero) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
@@ -63,7 +66,6 @@ fun ZoomableSectorProblemImage(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
             .clip(RoundedCornerShape(8.dp))
             .shadow(elevation = 8.dp)
             .pointerInput(interactive, holdRects, origImgSize, canvasSize) {
@@ -148,8 +150,9 @@ fun ZoomableSectorProblemImage(
                             }
 
                             if (clickedIndex != -1) {
-                                val hold = sector.holds[clickedIndex]
-                                println("Hold clicked: $hold")
+                                onHoldClicked(clickedIndex)
+                                //val hold = sector.holds[clickedIndex]
+                                //println("Hold clicked: $hold")
                             }
                         }
                     }
@@ -169,10 +172,7 @@ fun ZoomableSectorProblemImage(
                 origImgSize = IntSize(it.result.image.width, it.result.image.height)
                 println("Success! Size: $origImgSize")
             },
-            onError = {
-                println("Error: ${it.result.image}")
-                println("Error: ${it.result.request.data}")
-            },
+            onError = onImageLoadError,
             model = sectorImageUrl,
             contentDescription = "Image of sector ${sector.name}.",
         )
@@ -189,18 +189,28 @@ fun ZoomableSectorProblemImage(
                 )
                 .onSizeChanged {
                     canvasSize = it
-                    println("Canvas size: $it")
                 }
         ) {
             val scale = size.width / origImgSize.width
 
-            val markHold = { rect: Rect, color: Color ->
+            val markHold = { rect: Rect, color: Color, selected: Boolean ->
                 val scaledRect = Rect(
                     left = rect.left * scale,
                     top = rect.top * scale,
                     right = rect.right * scale,
                     bottom = rect.bottom * scale,
                 )
+
+                if (selected) {
+                    drawRect(
+                        color = color.copy(alpha = 0.5f),
+                        topLeft = Offset(scaledRect.left, scaledRect.top),
+                        size = Size(
+                            width = scaledRect.width,
+                            height = scaledRect.height,
+                        ),
+                    )
+                }
 
                 drawRect(
                     color = color,
@@ -213,43 +223,33 @@ fun ZoomableSectorProblemImage(
                         width = 2.dp.toPx(),
                         cap = StrokeCap.Round,
                     ),
+
                 )
             }
 
             if (interactive) {
                 holdRects.forEach { rect ->
-                    markHold(rect, Color.Cyan)
+                    markHold(rect, Color.LightGray, false)
                 }
             }
 
-            problem.holdSequence.forEach { holds ->
-                val index = holds[0]
-                val type = holds[1]
+            holds.forEach { hold ->
+                val index = hold.holdIndex
 
                 if (index < sector.holds.size) {
-                    val hold = sector.holds[index]
-                    val color = typeToColor(type)
+                    val color =  hold.holdType.outlineColor
+                    val sectorHold = sector.holds[index]
 
                     val rect = Rect(
-                        left = hold[0].toFloat(),
-                        top = hold[1].toFloat(),
-                        right = hold[2].toFloat(),
-                        bottom = hold[3].toFloat()
+                        left = sectorHold[0].toFloat(),
+                        top = sectorHold[1].toFloat(),
+                        right = sectorHold[2].toFloat(),
+                        bottom = sectorHold[3].toFloat()
                     )
 
-                    markHold(rect, color)
+                    markHold(rect, color, index == selectedHold?.holdIndex)
                 }
             }
         }
-    }
-}
-
-private fun typeToColor(type: Int): Color {
-    return when (type) {
-        0 -> Color.Green
-        1 -> Color.Yellow
-        2 -> Color.Blue
-        3 -> Color.Red
-        else -> Color.Cyan
     }
 }
