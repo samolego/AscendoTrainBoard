@@ -60,8 +60,23 @@ fun AppNavigation(
         ) {
             val problemId = it.toRoute<ProblemDetails>().problemId
             problemDetailsViewModel.setProblem(problemId)
+
             ProblemDetailsScreen(
-                problemId = problemId,
+                viewModel = problemDetailsViewModel,
+                onNavigateBack = { navController.popBackStack() },
+            )
+        }
+
+        composable<EditProblem>(
+            deepLinks = listOf(navDeepLink { uriPattern = "$baseUrl/problems/edit/{problemId}" }),
+            enterTransition = { fadeIn(animationSpec = tween(150)) },
+            exitTransition = { fadeOut(animationSpec = tween(150)) },
+        ) {
+            val problemId = it.toRoute<ProblemDetails>().problemId
+            problemDetailsViewModel.setProblem(problemId)
+            problemDetailsViewModel.toggleEditMode()
+
+            ProblemDetailsScreen(
                 viewModel = problemDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
             )
@@ -73,6 +88,7 @@ fun AppNavigation(
             enterTransition = { fadeIn(animationSpec = tween(150)) },
             exitTransition = { fadeOut(animationSpec = tween(150)) }
         ) {
+            problemDetailsViewModel.toggleEditMode()
             EditProblemScreen(
                 viewModel = problemDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },

@@ -97,21 +97,19 @@ class ProblemDetailsViewModel(
         api.getSectorImageUrl(sectorName)
 
     fun toggleEditMode() {
-        if (state.value.canEdit) {
-            val newEditMode = !state.value.inEditMode
-            _state.update {
-                it.copy(
-                    inEditMode = newEditMode,
-                    editableHolds = if (newEditMode) {
-                        it.problem?.holdSequence
-                            ?.mapNotNull { hold -> ProblemHold.fromList(hold) }
-                            ?.associateBy { hold -> hold.holdIndex }
-                            ?: emptyMap()
-                    } else {
-                        emptyMap()
-                    }
-                )
-            }
+        val newEditMode = !state.value.inEditMode
+        _state.update {
+            it.copy(
+                inEditMode = newEditMode,
+                editableHolds = if (newEditMode) {
+                    it.problem?.holdSequence
+                        ?.mapNotNull { hold -> ProblemHold.fromList(hold) }
+                        ?.associateBy { hold -> hold.holdIndex }
+                        ?: emptyMap()
+                } else {
+                    emptyMap()
+                }
+            )
         }
     }
 

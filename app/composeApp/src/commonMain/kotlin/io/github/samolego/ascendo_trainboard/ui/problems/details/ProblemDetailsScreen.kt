@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,13 +45,8 @@ import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblem
 fun ProblemDetailsScreen(
     viewModel: ProblemDetailsViewModel,
     onNavigateBack: () -> Unit,
-    problemId: Int,
 ) {
     val state by viewModel.state.collectAsState()
-
-    LaunchedEffect(problemId) {
-        viewModel.setProblem(problemId)
-    }
 
     Scaffold(
         topBar = {
