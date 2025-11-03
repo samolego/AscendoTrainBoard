@@ -53,7 +53,13 @@ fun ProblemDetailsScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(
-                        onClick = onNavigateBack,
+                        onClick = {
+                            if (state.inEditMode) {
+                                // Discard changes, dialog?? todo
+                                viewModel.toggleEditMode()
+                            }
+                            onNavigateBack()
+                        },
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }

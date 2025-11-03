@@ -87,10 +87,9 @@ class ProblemDetailsViewModel(
     }
 
     fun setProblem(problemId: Int) {
-        if (problemId != state.value.problemId) {
-            _state.update { it.copy(problemId = problemId) }
-            loadProblem(refresh = true)
-        }
+        // We force the update since other things may have changed (auth status etc.)
+        _state.update { it.copy(problemId = problemId) }
+        loadProblem(refresh = true)
     }
 
     fun getSectorImageUrl(sectorName: String): String =
