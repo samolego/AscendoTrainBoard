@@ -1,13 +1,15 @@
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{ConnectInfo, Path, Query, State},
     http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
 };
 use serde::Deserialize;
+use std::net::SocketAddr;
 
 use crate::auth::{extract_token, generate_salt, hash_password, verify_password};
 use crate::models::*;
+
 use crate::state::AppState;
 
 // Helper to get current timestamp
@@ -30,6 +32,7 @@ async fn get_auth_user(state: &AppState, headers: &HeaderMap) -> Result<String, 
             Json(ErrorResponse {
                 error: "Not authenticated".to_string(),
                 code: "NOT_AUTHENTICATED".to_string(),
+                timeout: None,
             }),
         )
             .into_response()
@@ -42,6 +45,7 @@ async fn get_auth_user(state: &AppState, headers: &HeaderMap) -> Result<String, 
             Json(ErrorResponse {
                 error: "Invalid token".to_string(),
                 code: "INVALID_TOKEN".to_string(),
+                timeout: None,
             }),
         )
             .into_response()
@@ -61,6 +65,7 @@ pub async fn register(
             Json(ErrorResponse {
                 error: "Username must be between 3 and 50 characters".to_string(),
                 code: "INVALID_USERNAME".to_string(),
+                timeout: None,
             }),
         ));
     }
@@ -71,6 +76,7 @@ pub async fn register(
             Json(ErrorResponse {
                 error: "Password must be at least 6 characters".to_string(),
                 code: "INVALID_PASSWORD".to_string(),
+                timeout: None,
             }),
         ));
     }
@@ -83,6 +89,7 @@ pub async fn register(
             Json(ErrorResponse {
                 error: "Username already exists".to_string(),
                 code: "USERNAME_EXISTS".to_string(),
+                timeout: None,
             }),
         ));
     }
@@ -115,35 +122,65 @@ pub async fn register(
 
 pub async fn login(
     State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    let ip = addr.ip();
+
+    let mut rate_limiter = state.rate_limiter.write().await;
+    if let Err(rate_error) = rate_limiter.check_and_wait(ip) {
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse {
+                error: rate_error.message().to_string(),
+                code: rate_error.code().to_string(),
+                timeout: Some(rate_error.timeout()),
+            }),
+        ));
+    }
+    drop(rate_limiter);
+
     let users = state.users.read().await;
 
-    let user = users
-        .iter()
-        .find(|u| u.username == payload.username)
-        .ok_or_else(|| {
-            (
+    let user = users.iter().find(|u| u.username == payload.username);
+
+    let user = match user {
+        Some(u) => u,
+        None => {
+            drop(users);
+            let mut rate_limiter = state.rate_limiter.write().await;
+            let timeout = rate_limiter.record_failed_attempt(ip);
+            return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ErrorResponse {
                     error: "Invalid credentials".to_string(),
                     code: "INVALID_CREDENTIALS".to_string(),
+                    timeout: Some(timeout),
                 }),
-            )
-        })?;
+            ));
+        }
+    };
 
     if !verify_password(&payload.password, &user.salt, &user.password_hash) {
+        drop(users);
+        let mut rate_limiter = state.rate_limiter.write().await;
+        let timeout = rate_limiter.record_failed_attempt(ip);
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(ErrorResponse {
                 error: "Invalid credentials".to_string(),
                 code: "INVALID_CREDENTIALS".to_string(),
+                timeout: Some(timeout),
             }),
         ));
     }
 
     let username = user.username.clone();
     drop(users);
+
+    let mut rate_limiter = state.rate_limiter.write().await;
+    rate_limiter.record_successful_attempt(ip);
+    drop(rate_limiter);
 
     let mut sessions = state.sessions.write().await;
     let token = sessions.create_session(username.clone());
@@ -164,6 +201,7 @@ pub async fn logout(
             Json(ErrorResponse {
                 error: "Not authenticated".to_string(),
                 code: "NOT_AUTHENTICATED".to_string(),
+                timeout: None,
             }),
         )
     })?;
@@ -191,6 +229,7 @@ pub async fn get_sector(
             Json(ErrorResponse {
                 error: "Sector not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         )
     })?;
@@ -211,6 +250,7 @@ pub async fn get_sector_image(
             Json(ErrorResponse {
                 error: "Sector not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         )
     })?;
@@ -223,6 +263,7 @@ pub async fn get_sector_image(
             Json(ErrorResponse {
                 error: "Sector image not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         ));
     }
@@ -233,6 +274,7 @@ pub async fn get_sector_image(
             Json(ErrorResponse {
                 error: "Failed to read sector image".to_string(),
                 code: "IO_ERROR".to_string(),
+                timeout: None,
             }),
         )
     })?;
@@ -311,6 +353,7 @@ pub async fn get_problem(
             Json(ErrorResponse {
                 error: "Problem not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         )
     })?;
@@ -331,6 +374,7 @@ pub async fn create_problem(
             Json(ErrorResponse {
                 error: "Sector does not exist".to_string(),
                 code: "INVALID_SECTOR".to_string(),
+                timeout: None,
             }),
         )
             .into_response());
@@ -342,6 +386,7 @@ pub async fn create_problem(
             Json(ErrorResponse {
                 error: "Hold sequence cannot be empty".to_string(),
                 code: "INVALID_HOLD_SEQUENCE".to_string(),
+                timeout: None,
             }),
         )
             .into_response());
@@ -389,6 +434,7 @@ pub async fn update_problem(
             Json(ErrorResponse {
                 error: "Problem not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         )
             .into_response()
@@ -401,6 +447,7 @@ pub async fn update_problem(
             Json(ErrorResponse {
                 error: "You can only edit your own problems".to_string(),
                 code: "FORBIDDEN".to_string(),
+                timeout: None,
             }),
         )
             .into_response());
@@ -413,6 +460,7 @@ pub async fn update_problem(
                 Json(ErrorResponse {
                     error: "Hold sequence cannot be empty".to_string(),
                     code: "INVALID_HOLD_SEQUENCE".to_string(),
+                    timeout: None,
                 }),
             )
                 .into_response());
@@ -459,6 +507,7 @@ pub async fn delete_problem(
             Json(ErrorResponse {
                 error: "Problem not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         )
             .into_response()
@@ -471,6 +520,7 @@ pub async fn delete_problem(
             Json(ErrorResponse {
                 error: "You can only delete your own problems".to_string(),
                 code: "FORBIDDEN".to_string(),
+                timeout: None,
             }),
         )
             .into_response());
@@ -497,6 +547,7 @@ pub async fn get_problem_grades(
             Json(ErrorResponse {
                 error: "Problem not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         )
     })?;
@@ -525,6 +576,7 @@ pub async fn submit_problem_grade(
             Json(ErrorResponse {
                 error: "Stars must be between 1 and 5".to_string(),
                 code: "INVALID_STARS".to_string(),
+                timeout: None,
             }),
         )
             .into_response());
@@ -538,6 +590,7 @@ pub async fn submit_problem_grade(
             Json(ErrorResponse {
                 error: "Problem not found".to_string(),
                 code: "NOT_FOUND".to_string(),
+                timeout: None,
             }),
         )
             .into_response()

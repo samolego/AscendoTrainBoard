@@ -1,6 +1,7 @@
 package io.github.samolego.ascendo_trainboard.api
 
 import io.github.samolego.ascendo_trainboard.api.generated.models.CreateProblemRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.Error
 import io.github.samolego.ascendo_trainboard.api.generated.models.Grade
 import io.github.samolego.ascendo_trainboard.api.generated.models.LoginRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.LoginResponse
@@ -24,9 +25,11 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -57,65 +60,78 @@ class AscendoApi(
     private var authToken: String? = null
     var username: String? = null
 
+    /**
+     * Helper function to handle API responses with proper error parsing
+     */
+    private suspend inline fun <reified T> safeApiCall(
+        crossinline block: suspend () -> HttpResponse
+    ): Result<T> {
+        return try {
+            val response = block()
+            if (response.status.isSuccess()) {
+                Result.success(response.body<T>())
+            } else {
+                // Try to parse as Error response
+                val error = try {
+                    response.body<Error>()
+                } catch (_: Exception) {
+                    // Fallback if error parsing fails
+                    Error(
+                        error = "HTTP ${response.status.value}: ${response.status.description}",
+                        code = "HTTP_ERROR"
+                    )
+                }
+                Result.failure(ApiException(error, response.status.value))
+            }
+        } catch (e: Exception) {
+            // Network or other errors
+            Result.failure(e)
+        }
+    }
+
     // Auth endpoints
     suspend fun register(username: String, password: String): Result<User> {
-        return try {
-            val response: User = client.post("$baseUrl/auth/register") {
+        return safeApiCall {
+            client.post("$baseUrl/auth/register") {
                 contentType(ContentType.Application.Json)
                 setBody(RegisterRequest(username = username, password = password))
-            }.body()
-
-            // Note: Backend returns token in different response, adjust if needed
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+            }
         }
     }
 
     suspend fun login(username: String, password: String): Result<LoginResponse> {
-        return try {
-            val response: LoginResponse = client.post("$baseUrl/auth/login") {
+        return safeApiCall<LoginResponse> {
+            client.post("$baseUrl/auth/login") {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequest(username = username, password = password))
-            }.body()
-
+            }
+        }.onSuccess { response ->
             authToken = response.token
             this@AscendoApi.username = response.username
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
     suspend fun logout(): Result<Unit> {
-        return try {
+        return safeApiCall<Unit> {
             client.post("$baseUrl/auth/logout") {
                 authToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
             }
+        }.onSuccess {
             authToken = null
             username = null
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
     // Sector endpoints
     suspend fun getSectors(): Result<List<SectorSummary>> {
-        return try {
-            val response: List<SectorSummary> = client.get("$baseUrl/sectors").body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+        return safeApiCall {
+            client.get("$baseUrl/sectors")
         }
     }
 
     suspend fun getSector(name: String): Result<Sector> {
-        return try {
-            val response: Sector = client.get("$baseUrl/sectors/$name").body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+        return safeApiCall {
+            client.get("$baseUrl/sectors/$name")
         }
     }
 
@@ -130,87 +146,66 @@ class AscendoApi(
         page: Int = 1,
         perPage: Int = 20
     ): Result<ProblemList> {
-        return try {
-            val response: ProblemList = client.get("$baseUrl/problems") {
+        return safeApiCall {
+            client.get("$baseUrl/problems") {
                 sector?.let { parameter("sector", it) }
                 minGrade?.let { parameter("min_grade", it) }
                 maxGrade?.let { parameter("max_grade", it) }
                 name?.let { parameter("name", it) }
                 parameter("page", page)
                 parameter("per_page", perPage)
-            }.body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+            }
         }
     }
 
     suspend fun getProblem(id: Int): Result<Problem> {
-        return try {
-            val response: Problem = client.get("$baseUrl/problems/$id").body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+        return safeApiCall {
+            client.get("$baseUrl/problems/$id")
         }
     }
 
     suspend fun createProblem(request: CreateProblemRequest): Result<Problem> {
-        return try {
-            val response: Problem = client.post("$baseUrl/problems") {
+        return safeApiCall {
+            client.post("$baseUrl/problems") {
                 authToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+            }
         }
     }
 
     suspend fun updateProblem(id: Int, request: UpdateProblemRequest): Result<Problem> {
-        return try {
-            val response: Problem = client.put("$baseUrl/problems/$id") {
+        return safeApiCall {
+            client.put("$baseUrl/problems/$id") {
                 authToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+            }
         }
     }
 
     suspend fun deleteProblem(id: Int): Result<Unit> {
-        return try {
+        return safeApiCall {
             client.delete("$baseUrl/problems/$id") {
                 authToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
             }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
     // Grade endpoints
     suspend fun getProblemGrades(id: Int): Result<ProblemGrades> {
-        return try {
-            val response: ProblemGrades = client.get("$baseUrl/problems/$id/grades").body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+        return safeApiCall {
+            client.get("$baseUrl/problems/$id/grades")
         }
     }
 
     suspend fun submitGrade(problemId: Int, request: SubmitGradeRequest): Result<Grade> {
-        return try {
-            val response: Grade = client.post("$baseUrl/problems/$problemId/grades") {
+        return safeApiCall {
+            client.post("$baseUrl/problems/$problemId/grades") {
                 authToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body()
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+            }
         }
     }
 

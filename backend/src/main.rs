@@ -2,6 +2,7 @@ use axum::{
     Router,
     routing::{delete, get, post, put},
 };
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
 use tower_http::cors::{Any, CorsLayer};
@@ -9,6 +10,7 @@ use tower_http::cors::{Any, CorsLayer};
 mod auth;
 mod handlers;
 mod models;
+mod rate_limit;
 mod state;
 
 use state::AppState;
@@ -87,7 +89,10 @@ async fn main() {
     println!("🚀 Server running on http://0.0.0.0:3000");
     println!("📚 API available at http://0.0.0.0:3000/api/v1");
 
-    axum::serve(listener, app)
-        .await
-        .expect("Server failed to start");
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .expect("Server failed to start");
 }

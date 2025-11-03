@@ -165,6 +165,8 @@ pub struct Sector {
 pub struct ErrorResponse {
     pub error: String,
     pub code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timeout: Option<u64>,
 }
 
 impl Problem {

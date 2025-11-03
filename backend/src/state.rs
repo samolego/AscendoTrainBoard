@@ -4,6 +4,7 @@ use tokio::sync::RwLock;
 
 use crate::auth::SessionManager;
 use crate::models::{Problem, SectorMetadata, SectorSummary, Settings, User};
+use crate::rate_limit::RateLimiter;
 
 pub struct AppState {
     pub settings: Settings,
@@ -12,6 +13,7 @@ pub struct AppState {
     pub sessions: Arc<RwLock<SessionManager>>,
     pub next_problem_id: Arc<RwLock<u32>>,
     pub dirty: Arc<RwLock<bool>>,
+    pub rate_limiter: Arc<RwLock<RateLimiter>>,
     data_path: PathBuf,
     pub sectors_path: PathBuf,
     pub sectors: Vec<SectorSummary>,
@@ -77,6 +79,7 @@ impl AppState {
             sessions: Arc::new(RwLock::new(SessionManager::new())),
             next_problem_id: Arc::new(RwLock::new(next_id)),
             dirty: Arc::new(RwLock::new(false)),
+            rate_limiter: Arc::new(RwLock::new(RateLimiter::new())),
             data_path,
             sectors_path,
             sectors,
@@ -186,6 +189,7 @@ impl Clone for AppState {
             sessions: Arc::clone(&self.sessions),
             next_problem_id: Arc::clone(&self.next_problem_id),
             dirty: Arc::clone(&self.dirty),
+            rate_limiter: Arc::clone(&self.rate_limiter),
             data_path: self.data_path.clone(),
             sectors_path: self.sectors_path.clone(),
             sectors: self.sectors.clone(),

@@ -8,6 +8,10 @@ info:
     **Authentication:** Cookie-based sessions
 
     **Grading System:** Numeric grades (integers) - client converts to Fontainebleau scale
+
+    **Rate Limiting:** Login attempts are rate limited by IP address to prevent brute force attacks.
+    After each failed login attempt, the wait time increases by 3 seconds (3s, 6s, 9s, 12s).
+    After 5 failed attempts, the IP is banned for 2 hours.
   version: 1.0.0
   contact:
     name: AscendoTrainBoard
@@ -71,6 +75,11 @@ paths:
       tags:
         - Authentication
       summary: Authenticate user and obtain session cookie
+      description: |
+        Authenticates a user with username and password. This endpoint is protected by rate limiting:
+        - Failed attempts require progressive wait times (3s * number of failed attempts)
+        - After 5 failed attempts from the same IP, the IP is banned for 2 hours
+        - Successful login clears the failure count for that IP
       operationId: loginUser
       requestBody:
         required: true
@@ -91,6 +100,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              examples:
+                invalidCredentials:
+                  value:
+                    error: "Invalid credentials"
+                    code: "INVALID_CREDENTIALS"
+                    timeout: 3
+                  summary: Invalid credentials - must wait 3 seconds (increases with each failed attempt)
+        "429":
+          description: Too many login attempts - rate limited or banned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                rateLimited:
+                  value:
+                    error: "Please wait before trying again"
+                    code: "RATE_LIMIT"
+                    timeout: 3
+                  summary: Rate limited - must wait before next attempt
+                banned:
+                  value:
+                    error: "Too many failed login attempts. Account temporarily banned."
+                    code: "BANNED"
+                    timeout: 7200
+                  summary: IP banned for 2 hours (7200 seconds) after 5 failed attempts
 
   /auth/logout:
     post:
@@ -656,8 +691,27 @@ components:
           example: Invalid credentials
         code:
           type: string
-          description: Error code
+          description: |
+            Error code. Common values include:
+            - INVALID_CREDENTIALS: Invalid username or password
+            - RATE_LIMIT: Too many login attempts, must wait before retry
+            - BANNED: IP banned due to excessive failed login attempts
+            - NOT_AUTHENTICATED: Authentication required
+            - FORBIDDEN: Insufficient permissions
+            - NOT_FOUND: Resource not found
+            - INVALID_USERNAME, INVALID_PASSWORD, etc.: Validation errors
           example: INVALID_CREDENTIALS
+        timeout:
+          type: integer
+          format: int64
+          nullable: true
+          description: |
+            Number of seconds to wait before retrying. Present for authentication-related errors:
+            - For INVALID_CREDENTIALS: wait time before next attempt (3s × failed attempt count, or 7200s if banned)
+            - For RATE_LIMIT: seconds until next login attempt is allowed
+            - For BANNED: seconds until ban expires (7200 for 2 hours)
+            - null for other error types
+          example: 3
 
     RegisterRequest:
       type: object

@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +40,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import io.github.samolego.ascendo_trainboard.ui.error.ErrorBottomBar
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Clock.System.now
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun AuthenticatedUserView(
@@ -85,18 +90,48 @@ fun AuthenticatedUserView(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun AuthenticationScreen(
     viewModel: AuthenticationViewModel,
     onNavigateBack: () -> Boolean
 ) {
-    Scaffold{
+    val state by viewModel.state.collectAsState()
+    var remainingSeconds by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(state.timeoutUntil) {
+        state.timeoutUntil?.let { targetTime ->
+            // Launch in the LaunchedEffect scope
+            while (true) {
+                val now = now()
+                val remaining = (targetTime - now).inWholeSeconds
+
+                if (remaining <= 0) {
+                    viewModel.clearTimeout()
+                    remainingSeconds = 0
+                    break
+                }
+
+                remainingSeconds = remaining
+                delay(1000)
+            }
+        }
+    }
+
+    Scaffold(
+        bottomBar = {
+            if (state.error != null) {
+                ErrorBottomBar(
+                    error = state.error!!,
+                    onDismiss = viewModel::clearError
+                )
+            }
+        }
+    ) {
         Box(
             modifier = Modifier.padding(it)
         ) {
             val scope = rememberCoroutineScope()
-            val isAuthenticated by viewModel.isAuthenticated.collectAsState()
-            val authenticatedUsername by viewModel.username.collectAsState()
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(8.dp),
@@ -110,7 +145,7 @@ fun AuthenticationScreen(
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
-                if (isAuthenticated) {
+                if (state.isAuthenticated) {
                     IconButton(
                         onClick = {
                             scope.launch {
@@ -123,9 +158,9 @@ fun AuthenticationScreen(
                 }
             }
 
-            if (isAuthenticated) {
+            if (state.isAuthenticated) {
                 AuthenticatedUserView(
-                    username = authenticatedUsername,
+                    username = state.username,
                     onNavigateBack = onNavigateBack,
                 )
                 return@Scaffold
@@ -240,11 +275,26 @@ fun AuthenticationScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        enabled = canSubmit
+                        enabled = canSubmit && !state.isLoading && state.timeoutUntil == null
                     ) {
                         Text(
-                            text = if (isRegistering) "Ustvari račun" else "Prijava",
+                            text = when {
+                                state.isLoading -> "Nalaganje..."
+                                remainingSeconds > 0L -> "Počakaj ${remainingSeconds}s"
+                                isRegistering -> "Ustvari račun"
+                                else -> "Prijava"
+                            },
                             style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+
+                    state.error?.let { error ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = error.message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
