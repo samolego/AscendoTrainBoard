@@ -165,7 +165,7 @@ class AscendoApi(
     ): Result<ProblemList> {
         return safeApiCall {
             client.get("$baseUrl/problems") {
-                sector?.let { parameter("sector", it) }
+                sector?.let { parameter("sector_id", it) }
                 minGrade?.let { parameter("min_grade", it) }
                 maxGrade?.let { parameter("max_grade", it) }
                 name?.let { parameter("name", it) }
