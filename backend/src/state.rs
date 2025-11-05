@@ -208,7 +208,11 @@ impl AppState {
             let id = metadata.id.unwrap();
             sectors.push(SectorSummary {
                 id,
-                name: folder_name,
+                name: metadata
+                    .display_name
+                    .as_deref()
+                    .unwrap_or(&folder_name)
+                    .to_string(),
             });
             id2sector_metadata.insert(id, metadata);
         }
