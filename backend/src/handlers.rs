@@ -274,8 +274,6 @@ pub async fn get_sector_image(
         )
     })?;
     let image_path = sector_dir.join(image_filename);
-    println!("{:?}", &metadata.folder_name);
-    println!("{:?}", image_path);
     if !image_path.exists() {
         return Err((
             StatusCode::NOT_FOUND,

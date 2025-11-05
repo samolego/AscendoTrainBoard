@@ -39,6 +39,9 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
 import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
+import kotlin.time.Clock.System.now
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,6 +136,7 @@ fun ProblemDetailsScreen(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun ProblemDetails(
     modifier: Modifier = Modifier,
@@ -146,6 +150,9 @@ fun ProblemDetails(
     getHoldByIndex: (Int) -> ProblemHold? = { null },
 ) {
     var selectedHold by remember { mutableStateOf<ProblemHold?>(null) }
+    var lastHoldClickTime by remember {
+        mutableStateOf(Instant.fromEpochSeconds(0))
+    }
 
     Column(
         modifier = modifier,
@@ -156,7 +163,17 @@ fun ProblemDetails(
             sector = sector,
             holds = holds,
             onHoldClicked = { holdIndex ->
-                if (selectedHold?.holdIndex == holdIndex && false) {  //todo - doesn't work that well on mobile
+                val time = now()
+                val difference = time - lastHoldClickTime
+                lastHoldClickTime = time
+
+                if (difference.inWholeMilliseconds < 80) {
+                    // Mobile browser recognizes 2 clicks for some reason
+                    // so we must limit it
+                    return@ZoomableSectorProblemImage
+                }
+
+                if (selectedHold?.holdIndex == holdIndex) {
                     onHoldRemoved(holdIndex)
                     selectedHold = null
                 } else {
