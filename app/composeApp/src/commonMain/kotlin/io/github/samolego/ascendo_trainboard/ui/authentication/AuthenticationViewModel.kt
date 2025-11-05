@@ -5,6 +5,7 @@ package io.github.samolego.ascendo_trainboard.ui.authentication
 import androidx.lifecycle.ViewModel
 import io.github.samolego.ascendo_trainboard.api.ApiException
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
+import io.github.samolego.ascendo_trainboard.api.generated.models.LoginResponse
 import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
 import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 data class AuthenticationState(
-    val isAuthenticated: Boolean = false,
+    val isAuthenticated: Boolean,
     val username: String = "",
     val timeoutUntil: Instant? = null,
     val error: ErrorUiState? = null,
@@ -35,6 +36,30 @@ class AuthenticationViewModel(
         )
     )
     val state: StateFlow<AuthenticationState> = _state.asStateFlow()
+
+    suspend fun restoreSession(loadData: suspend () -> LoginResponse?) {
+        loadData()?.let {
+            api.restartSession(it)
+                .onSuccess { response ->
+                    _state.update {
+                        it.copy(
+                            isAuthenticated = true,
+                            username = response.username,
+                            error = null
+                        )
+                    }
+                }
+                .onFailure {
+                    _state.update {
+                        it.copy(
+                            isAuthenticated = false,
+                            username = "",
+                            error = null
+                        )
+                    }
+                }
+        }
+    }
 
     suspend fun login(username: String, password: String) {
         _state.update { it.copy(isLoading = true, error = null) }

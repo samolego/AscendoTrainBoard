@@ -3,7 +3,8 @@ package io.github.samolego.ascendo_trainboard
 import kotlinx.browser.window
 
 class WasmPlatform : Platform {
-    override val name: String = "Web with Kotlin/Wasm"
+    override val name = "Web with Kotlin/Wasm"
+    override val storage = WasmLocalStorage()
 
     override fun baseUrl(debug: Boolean) =
         if (debug) {

@@ -54,7 +54,7 @@ impl SessionManager {
         self.sessions.get(token)
     }
 
-    pub fn remove_session(&mut self, token: &str) -> bool {
-        self.sessions.remove(token).is_some()
+    pub fn remove_session(&mut self, token: &str) -> Option<String> {
+        self.sessions.remove(token)
     }
 }

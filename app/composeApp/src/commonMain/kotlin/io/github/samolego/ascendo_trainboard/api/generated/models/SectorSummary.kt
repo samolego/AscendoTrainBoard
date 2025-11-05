@@ -24,7 +24,7 @@ import kotlinx.serialization.encoding.*
  * 
  *
  * @param id Unique sector ID
- * @param name Sector name (matches folder name)
+ * @param name Sector display name (if not set, the folder name is used)
  */
 @Serializable
 
@@ -33,7 +33,7 @@ data class SectorSummary (
     /* Unique sector ID */
     @SerialName(value = "id") @Required val id: kotlin.Int,
 
-    /* Sector name (matches folder name) */
+    /* Sector display name (if not set, the folder name is used) */
     @SerialName(value = "name") @Required val name: kotlin.String
 
 ) {

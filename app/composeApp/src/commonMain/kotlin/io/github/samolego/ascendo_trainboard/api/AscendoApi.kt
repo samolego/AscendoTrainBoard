@@ -14,6 +14,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.SubmitGradeRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.User
+import io.github.samolego.ascendo_trainboard.getPlatform
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
@@ -59,6 +60,7 @@ class AscendoApi(
 
     private var authToken: String? = null
     var username: String? = null
+        private set
 
     /**
      * Helper function to handle API responses with proper error parsing
@@ -108,6 +110,7 @@ class AscendoApi(
         }.onSuccess { response ->
             authToken = response.token
             this@AscendoApi.username = response.username
+            getPlatform().storage.saveLoginInfo(response)
         }
     }
 
@@ -122,7 +125,21 @@ class AscendoApi(
         }
     }
 
-    // Sector endpoints
+    suspend fun restartSession(data: LoginResponse): Result<LoginResponse> {
+        return safeApiCall<LoginResponse> {
+            client.get("$baseUrl/auth/rotate_token") {
+                header(HttpHeaders.Authorization, "Bearer ${data.token}")
+            }
+        }.onSuccess { response ->
+            authToken = response.token
+            username = response.username
+            getPlatform().storage.saveLoginInfo(response)
+        }.onFailure {
+            authToken = null
+            username = null
+        }
+    }
+
     suspend fun getSectors(): Result<List<SectorSummary>> {
         return safeApiCall {
             client.get("$baseUrl/sectors")

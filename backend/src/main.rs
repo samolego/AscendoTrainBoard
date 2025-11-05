@@ -1,7 +1,7 @@
 use axum::{
     Router,
     extract::ConnectInfo,
-    http::{Request, Response},
+    http::{Request, Response, header},
     routing::{delete, get, post, put},
 };
 use std::net::SocketAddr;
@@ -54,7 +54,7 @@ async fn main() {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE]);
 
     const API_V1_AUTH: &str = "/api/v1/auth";
     const API_V1_SECTORS: &str = "/api/v1/sectors";
@@ -69,6 +69,10 @@ async fn main() {
         )
         .route(&format!("{}/login", API_V1_AUTH), post(handlers::login))
         .route(&format!("{}/logout", API_V1_AUTH), post(handlers::logout))
+        .route(
+            &format!("{}/rotate_token", API_V1_AUTH),
+            get(handlers::rotate_token),
+        )
         .route(API_V1_SECTORS, get(handlers::list_sectors))
         .route(API_V1_SECTORS_ID, get(handlers::get_sector))
         .route(

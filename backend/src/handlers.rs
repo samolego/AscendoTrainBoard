@@ -22,7 +22,10 @@ fn now() -> String {
 }
 
 // Helper to get authenticated user
-async fn get_auth_user(state: &AppState, headers: &HeaderMap) -> Result<String, Response> {
+async fn get_auth_user(
+    state: &AppState,
+    headers: &HeaderMap,
+) -> Result<(String, String), Response> {
     let auth_header = headers
         .get(header::AUTHORIZATION)
         .and_then(|h| h.to_str().ok());
@@ -51,7 +54,7 @@ async fn get_auth_user(state: &AppState, headers: &HeaderMap) -> Result<String, 
             .into_response()
     })?;
 
-    Ok(username.clone())
+    Ok((username.clone(), token))
 }
 
 // Auth handlers
@@ -210,6 +213,19 @@ pub async fn logout(
     sessions.remove_session(&token);
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn rotate_token(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, Response> {
+    let (username, token) = get_auth_user(&state, &headers).await?;
+
+    let mut sessions = state.sessions.write().await;
+    sessions.remove_session(&token);
+    let token = sessions.create_session(username.clone());
+
+    Ok(Json(LoginResponse { token, username }))
 }
 
 // Sector handlers
@@ -381,7 +397,7 @@ pub async fn create_problem(
     headers: HeaderMap,
     Json(payload): Json<CreateProblemRequest>,
 ) -> Result<impl IntoResponse, Response> {
-    let username = get_auth_user(&state, &headers).await?;
+    let (username, _) = get_auth_user(&state, &headers).await?;
 
     // Validate that sector_id exists
     let sector_exists = state
@@ -445,7 +461,7 @@ pub async fn update_problem(
     Path(id): Path<u32>,
     Json(payload): Json<UpdateProblemRequest>,
 ) -> Result<impl IntoResponse, Response> {
-    let username = get_auth_user(&state, &headers).await?;
+    let (username, _) = get_auth_user(&state, &headers).await?;
 
     let mut problems = state.problems.write().await;
 
@@ -518,7 +534,7 @@ pub async fn delete_problem(
     headers: HeaderMap,
     Path(id): Path<u32>,
 ) -> Result<impl IntoResponse, Response> {
-    let username = get_auth_user(&state, &headers).await?;
+    let (username, _) = get_auth_user(&state, &headers).await?;
 
     let mut problems = state.problems.write().await;
 
@@ -589,7 +605,7 @@ pub async fn submit_problem_grade(
     Path(id): Path<u32>,
     Json(payload): Json<SubmitGradeRequest>,
 ) -> Result<impl IntoResponse, Response> {
-    let username = get_auth_user(&state, &headers).await?;
+    let (username, _) = get_auth_user(&state, &headers).await?;
 
     if payload.stars < 1 || payload.stars > 5 {
         return Err((

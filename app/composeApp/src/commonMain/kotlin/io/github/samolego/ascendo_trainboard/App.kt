@@ -2,6 +2,7 @@ package io.github.samolego.ascendo_trainboard
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -16,12 +17,17 @@ fun App(
     onNavHostReady: suspend (NavController) -> Unit = {}
 ) {
     MaterialTheme {
-        val api = remember { AscendoApi(baseUrl = "${getPlatform().baseUrl(true)}/api/v1") }
+        val platform = getPlatform()
+        val api = remember { AscendoApi(baseUrl = "${platform.baseUrl(true)}/api/v1") }
         val problemListViewModel = remember { ProblemListViewModel(api) }
         val problemDetailsViewModel = remember { ProblemDetailsViewModel(api) }
         val authViewModel = remember { AuthenticationViewModel(api) }
 
         val navController = rememberNavController()
+
+        LaunchedEffect(Unit) {
+            authViewModel.restoreSession(platform.storage::loadLoginInfo)
+        }
 
         AppNavigation(
             navController = navController,

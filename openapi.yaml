@@ -145,6 +145,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /auth/rotate_token:
+    get:
+      tags:
+        - Authentication
+      summary: Recreates token and gets current authenticated user information
+      description: |
+        Invalidates old token on the server and generates new one.
+        Returns the current authenticated user's information based on the session cookie.
+        Use this endpoint to check if the session is still valid and restore user state on app startup.
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Not authenticated or session expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /sectors:
     get:
       tags:
