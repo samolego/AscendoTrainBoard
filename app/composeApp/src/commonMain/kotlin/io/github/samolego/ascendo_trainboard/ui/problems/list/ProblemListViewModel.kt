@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
 import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
+import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,10 +29,10 @@ data class ProblemListState(
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isLoadingSectors: Boolean = false,
-    val error: String? = null,
+    val error: ErrorUiState? = null,
     val currentPage: Int = 1,
     val hasMore: Boolean = true,
-    val selectedSector: String? = null,
+    val selectedSector: SectorSummary? = null,
     val minGrade: Int = MIN_GRADE,
     val maxGrade: Int = MAX_GRADE,
     val searchAuthor: String = ""
@@ -75,7 +77,7 @@ class ProblemListViewModel(
                 _state.update {
                     it.copy(
                         isLoadingSectors = false,
-                        error = error.message ?: "Failed to load sectors"
+                        error = error.toErrorUiState()
                     )
                 }
             }
@@ -91,17 +93,14 @@ class ProblemListViewModel(
                 _state.update { it.copy(isLoading = true) }
             }
 
-            println("Current state before loading: ${_state.value}")
             val result = api.getProblems(
-                sector = _state.value.selectedSector,
+                sector = _state.value.selectedSector?.id,
                 minGrade = _state.value.minGrade,
                 maxGrade = _state.value.maxGrade,
                 name = _state.value.searchAuthor.ifBlank { null },
                 page = 1,
                 perPage = 20
             )
-
-            println("Load problems result: $result")
 
             result.onSuccess { problemList ->
                 _state.update {
@@ -117,7 +116,7 @@ class ProblemListViewModel(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = error.message ?: "Failed to load problems"
+                        error = error.toErrorUiState()
                     )
                 }
             }
@@ -132,7 +131,7 @@ class ProblemListViewModel(
 
             val nextPage = _state.value.currentPage + 1
             val result = api.getProblems(
-                sector = _state.value.selectedSector,
+                sector = _state.value.selectedSector?.id,
                 minGrade = _state.value.minGrade,
                 maxGrade = _state.value.maxGrade,
                 name = _state.value.searchAuthor.ifBlank { null },
@@ -153,14 +152,14 @@ class ProblemListViewModel(
                 _state.update {
                     it.copy(
                         isLoadingMore = false,
-                        error = error.message ?: "Failed to load more problems"
+                        error = error.toErrorUiState()
                     )
                 }
             }
         }
     }
 
-    fun setSectorFilter(sector: String?) {
+    fun setSectorFilter(sector: SectorSummary?) {
         _state.update { it.copy(selectedSector = sector) }
         loadProblems(refresh = true)
     }

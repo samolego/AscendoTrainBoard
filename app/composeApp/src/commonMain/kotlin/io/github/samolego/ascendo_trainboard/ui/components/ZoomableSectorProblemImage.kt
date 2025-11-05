@@ -41,10 +41,8 @@ fun ZoomableSectorProblemImage(
     interactive: Boolean = false,
     onImageLoadError: (AsyncImagePainter.State.Error) -> Unit = {},
     onHoldClicked: (holdIndex: Int) -> Unit = {},
-    onHoldLongClicked: (holdIndex: Int) -> Unit = {},
     selectedHold: ProblemHold?,
 ) {
-    var origImgSize by remember { mutableStateOf(IntSize.Zero) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
     var zoom by remember { mutableStateOf(1f) }
@@ -68,7 +66,7 @@ fun ZoomableSectorProblemImage(
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .shadow(elevation = 8.dp)
-            .pointerInput(interactive, holdRects, origImgSize, canvasSize) {
+            .pointerInput(interactive, holdRects, canvasSize) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val downPosition = down.position
@@ -128,8 +126,8 @@ fun ZoomableSectorProblemImage(
                     if (interactive && !wasMultiTouch && movement < 10f && totalZoom == 1f) {
                         val tapPosition = downPosition
 
-                        if (origImgSize.width > 0 && canvasSize.width > 0) {
-                            val imageScale = canvasSize.width.toFloat() / origImgSize.width.toFloat()
+                        if (sector.imageWidth > 0 && canvasSize.width > 0) {
+                            val imageScale = canvasSize.width.toFloat() / sector.imageWidth.toFloat()
 
                             // Account for center-based zoom transformation
                             val centerX = canvasSize.width / 2f
@@ -162,16 +160,15 @@ fun ZoomableSectorProblemImage(
         AsyncImage(
             modifier = Modifier
                 .fillMaxWidth()
+                .onSizeChanged {
+                    //println("Size changed it $it")
+                }
                 .graphicsLayer(
                     scaleX = zoom,
                     scaleY = zoom,
                     translationX = zoomOffsetX,
                     translationY = zoomOffsetY
                 ),
-            onSuccess = {
-                origImgSize = IntSize(it.result.image.width, it.result.image.height)
-                println("Success! Size: $origImgSize")
-            },
             onError = onImageLoadError,
             model = sectorImageUrl,
             contentDescription = "Image of sector ${sector.name}.",
@@ -191,7 +188,7 @@ fun ZoomableSectorProblemImage(
                     canvasSize = it
                 }
         ) {
-            val scale = size.width / origImgSize.width
+            val scale = size.width / sector.imageWidth
 
             val markHold = { rect: Rect, color: Color, selected: Boolean ->
                 val scaledRect = Rect(
@@ -224,7 +221,7 @@ fun ZoomableSectorProblemImage(
                         cap = StrokeCap.Round,
                     ),
 
-                )
+                    )
             }
 
             if (interactive) {
@@ -237,7 +234,7 @@ fun ZoomableSectorProblemImage(
                 val index = hold.holdIndex
 
                 if (index < sector.holds.size) {
-                    val color =  hold.holdType.outlineColor
+                    val color = hold.holdType.outlineColor
                     val sectorHold = sector.holds[index]
 
                     val rect = Rect(

@@ -61,7 +61,7 @@ pub struct Problem {
     pub description: Option<String>,
     pub author: String,
     pub grade: u8,
-    pub sector_name: String,
+    pub sector_id: u16,
     pub hold_sequence: Vec<Hold>,
     pub grades: Vec<Grade>,
     pub updated_at: String,
@@ -74,7 +74,7 @@ pub struct ProblemSummary {
     pub description: Option<String>,
     pub author: String,
     pub grade: u8,
-    pub sector_name: String,
+    pub sector_id: u16,
     pub average_grade: Option<f32>,
     pub average_stars: Option<f32>,
     pub updated_at: String,
@@ -87,7 +87,7 @@ pub struct ProblemDetail {
     pub description: Option<String>,
     pub author: String,
     pub grade: u8,
-    pub sector_name: String,
+    pub sector_id: u16,
     pub hold_sequence: Vec<Hold>,
     pub average_grade: Option<f32>,
     pub average_stars: Option<f32>,
@@ -107,7 +107,7 @@ pub struct CreateProblemRequest {
     pub name: Option<String>,
     pub description: Option<String>,
     pub grade: u8,
-    pub sector_name: String,
+    pub sector_id: u16,
     pub hold_sequence: Vec<Hold>,
 }
 
@@ -145,19 +145,34 @@ pub struct SubmitGradeRequest {
 // Sector
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SectorMetadata {
-    pub image_filename: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_filename: Option<String>,
     pub holds: Vec<[u16; 4]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u16>,
+    #[serde(skip, default)]
+    pub image_width: u32,
+    #[serde(skip, default)]
+    pub image_height: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(skip, default)]
+    pub folder_name: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SectorSummary {
+    pub id: u16,
     pub name: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct Sector {
+    pub id: u16,
     pub name: String,
     pub holds: Vec<[u16; 4]>,
+    pub image_width: u32,
+    pub image_height: u32,
 }
 
 // Error
@@ -191,7 +206,7 @@ impl Problem {
             description: self.description.clone(),
             author: self.author.clone(),
             grade: self.grade,
-            sector_name: self.sector_name.clone(),
+            sector_id: self.sector_id,
             average_grade: avg_grade,
             average_stars: avg_stars,
             updated_at: self.updated_at.clone(),
@@ -206,7 +221,7 @@ impl Problem {
             description: self.description.clone(),
             author: self.author.clone(),
             grade: self.grade,
-            sector_name: self.sector_name.clone(),
+            sector_id: self.sector_id,
             hold_sequence: self.hold_sequence.clone(),
             average_grade: avg_grade,
             average_stars: avg_stars,

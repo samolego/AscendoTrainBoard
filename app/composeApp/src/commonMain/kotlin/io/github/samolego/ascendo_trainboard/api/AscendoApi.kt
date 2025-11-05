@@ -129,17 +129,17 @@ class AscendoApi(
         }
     }
 
-    suspend fun getSector(name: String): Result<Sector> {
+    suspend fun getSector(id: Int): Result<Sector> {
         return safeApiCall {
-            client.get("$baseUrl/sectors/$name")
+            client.get("$baseUrl/sectors/$id")
         }
     }
 
-    fun getSectorImageUrl(name: String): String = "$baseUrl/sectors/$name/image"
+    fun getSectorImageUrl(id: Int): String = "$baseUrl/sectors/$id/image"
 
     // Problem endpoints
     suspend fun getProblems(
-        sector: String? = null,
+        sector: Int? = null,
         minGrade: Int? = null,
         maxGrade: Int? = null,
         name: String? = null,

@@ -23,18 +23,30 @@ import kotlinx.serialization.encoding.*
 /**
  * 
  *
+ * @param id Unique sector ID
  * @param name Sector name (matches folder name)
  * @param holds Array of hold bounding boxes [start_x, start_y, end_x, end_y] in pixels
+ * @param imageWidth Width of the sector image in pixels
+ * @param imageHeight Height of the sector image in pixels
  */
 @Serializable
 
 data class Sector (
 
+    /* Unique sector ID */
+    @SerialName(value = "id") @Required val id: kotlin.Int,
+
     /* Sector name (matches folder name) */
     @SerialName(value = "name") @Required val name: kotlin.String,
 
     /* Array of hold bounding boxes [start_x, start_y, end_x, end_y] in pixels */
-    @SerialName(value = "holds") @Required val holds: kotlin.collections.List<kotlin.collections.List<kotlin.Int>>
+    @SerialName(value = "holds") @Required val holds: kotlin.collections.List<kotlin.collections.List<kotlin.Int>>,
+
+    /* Width of the sector image in pixels */
+    @SerialName(value = "image_width") @Required val imageWidth: kotlin.Int,
+
+    /* Height of the sector image in pixels */
+    @SerialName(value = "image_height") @Required val imageHeight: kotlin.Int
 
 ) {
 

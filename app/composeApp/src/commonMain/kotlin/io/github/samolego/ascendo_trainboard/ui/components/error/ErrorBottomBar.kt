@@ -1,4 +1,4 @@
-package io.github.samolego.ascendo_trainboard.ui.error
+package io.github.samolego.ascendo_trainboard.ui.components.error
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

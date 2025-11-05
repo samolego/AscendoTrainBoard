@@ -40,7 +40,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import io.github.samolego.ascendo_trainboard.ui.error.ErrorBottomBar
+import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorBottomBar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Clock.System.now

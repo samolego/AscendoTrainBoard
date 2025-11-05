@@ -115,7 +115,7 @@ fun ProblemDetailsScreen(
                             modifier = Modifier.fillMaxSize().padding(16.dp),
                             problem = state.problem!!,
                             sector = state.sector!!,
-                            imageUrl = viewModel.getSectorImageUrl(state.sector!!.name),
+                            imageUrl = viewModel.getSectorImageUrl(state.sector!!.id),
                             editable = state.inEditMode,
                             holds = if (state.inEditMode) {
                                 state.editableHolds.values.toList()
@@ -156,12 +156,13 @@ fun ProblemDetails(
             sector = sector,
             holds = holds,
             onHoldClicked = { holdIndex ->
-                if (selectedHold?.holdIndex == holdIndex) {
+                if (selectedHold?.holdIndex == holdIndex && false) {  //todo - doesn't work that well on mobile
                     onHoldRemoved(holdIndex)
                     selectedHold = null
                 } else {
-                    selectedHold = getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, HoldType.NORMAL)
-                    onHoldUpdated(holdIndex, ProblemHold(holdIndex, selectedHold!!.holdType))
+                    val newHold = getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, HoldType.NORMAL)
+                    selectedHold = newHold
+                    onHoldUpdated(holdIndex, newHold)
                 }
             },
             selectedHold = selectedHold,

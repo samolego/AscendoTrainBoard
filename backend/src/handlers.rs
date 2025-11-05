@@ -221,9 +221,9 @@ pub async fn list_sectors(
 
 pub async fn get_sector(
     State(state): State<AppState>,
-    Path(name): Path<String>,
+    Path(id): Path<u16>,
 ) -> Result<Json<Sector>, (StatusCode, Json<ErrorResponse>)> {
-    let metadata = state.sector_metadata.get(&name).ok_or_else(|| {
+    let metadata = state.sector_metadata.get(&id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {
@@ -235,16 +235,23 @@ pub async fn get_sector(
     })?;
 
     Ok(Json(Sector {
-        name: name,
+        id: metadata.id.unwrap(),
+        name: metadata
+            .display_name
+            .as_deref()
+            .unwrap_or(&metadata.folder_name)
+            .to_string(),
         holds: metadata.holds.clone(),
+        image_width: metadata.image_width,
+        image_height: metadata.image_height,
     }))
 }
 
 pub async fn get_sector_image(
     State(state): State<AppState>,
-    Path(name): Path<String>,
+    Path(id): Path<u16>,
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
-    let metadata = state.sector_metadata.get(&name).ok_or_else(|| {
+    let metadata = state.sector_metadata.get(&id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {
@@ -255,8 +262,20 @@ pub async fn get_sector_image(
         )
     })?;
 
-    let sector_dir = state.sectors_path.join(&name);
-    let image_path = sector_dir.join(&metadata.image_filename);
+    let sector_dir = state.sectors_path.join(&metadata.folder_name);
+    let image_filename = metadata.image_filename.as_ref().ok_or_else(|| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Sector image filename not set".to_string(),
+                code: "INVALID_SECTOR_METADATA".to_string(),
+                timeout: None,
+            }),
+        )
+    })?;
+    let image_path = sector_dir.join(image_filename);
+    println!("{:?}", &metadata.folder_name);
+    println!("{:?}", image_path);
     if !image_path.exists() {
         return Err((
             StatusCode::NOT_FOUND,
@@ -279,11 +298,9 @@ pub async fn get_sector_image(
         )
     })?;
 
-    let content_type = if metadata.image_filename.ends_with(".png") {
+    let content_type = if image_filename.ends_with(".png") {
         "image/png"
-    } else if metadata.image_filename.ends_with(".jpg")
-        || metadata.image_filename.ends_with(".jpeg")
-    {
+    } else if image_filename.ends_with(".jpg") || image_filename.ends_with(".jpeg") {
         "image/jpeg"
     } else {
         "application/octet-stream"
@@ -295,7 +312,7 @@ pub async fn get_sector_image(
 // Problem handlers
 #[derive(Debug, Deserialize)]
 pub struct ProblemQuery {
-    pub sector: Option<String>,
+    pub sector_id: Option<u16>,
     pub min_grade: Option<u8>,
     pub max_grade: Option<u8>,
     pub name: Option<String>,
@@ -311,7 +328,7 @@ pub async fn list_problems(
 
     let filtered: Vec<&Problem> = problems
         .iter()
-        .filter(|p| query.sector.as_ref().map_or(true, |s| p.sector_name == *s))
+        .filter(|p| query.sector_id.map_or(true, |s| p.sector_id == s))
         .filter(|p| query.min_grade.map_or(true, |g| p.grade >= g))
         .filter(|p| query.max_grade.map_or(true, |g| p.grade <= g))
         .filter(|p| {
@@ -368,7 +385,13 @@ pub async fn create_problem(
 ) -> Result<impl IntoResponse, Response> {
     let username = get_auth_user(&state, &headers).await?;
 
-    if !state.sector_metadata.contains_key(&payload.sector_name) {
+    // Validate that sector_id exists
+    let sector_exists = state
+        .sector_metadata
+        .values()
+        .any(|metadata| metadata.id == Some(payload.sector_id));
+
+    if !sector_exists {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse {
@@ -401,7 +424,7 @@ pub async fn create_problem(
         description: payload.description,
         author: username,
         grade: payload.grade,
-        sector_name: payload.sector_name,
+        sector_id: payload.sector_id,
         hold_sequence: payload.hold_sequence,
         grades: Vec::new(),
         updated_at: now(),

@@ -26,6 +26,7 @@ import kotlin.math.roundToInt
 @Composable
 fun ProblemCard(
     problem: ProblemSummary,
+    sectorName: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {  // todo - fix hovering; hover isn't rounded shape
@@ -45,7 +46,7 @@ fun ProblemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = problem.name ?: "Balvan #${problem.id}",
+                    text = problem.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -93,7 +94,7 @@ fun ProblemCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = problem.sectorName,
+                        text = sectorName,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -150,12 +151,14 @@ fun ProblemCard(
 private fun ProblemCardPreview() {
     ProblemCard(
         onClick = {},
+        sectorName = "Sector B",
         problem = ProblemSummary(
             id = 2,
             author = "samolego",
             description = "Be sure to climb with helmet on!",
             grade = 20,
-            sectorName = "Podest",
+            name = "abc",
+            sectorId = 1,
             averageStars = 3.24f,
             averageGrade = 18.23f,
         )
@@ -167,11 +170,13 @@ private fun ProblemCardPreview() {
 private fun ProblemCardPreviewMini() {
     ProblemCard(
         onClick = {},
+        sectorName = "Nad podestom",
         problem = ProblemSummary(
             id = 2,
             author = "samolego",
             grade = 20,
-            sectorName = "Podest",
+            name = "abc",
+            sectorId = 2,
         )
     )
 }

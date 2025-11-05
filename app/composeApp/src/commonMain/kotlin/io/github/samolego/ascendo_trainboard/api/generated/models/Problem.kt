@@ -24,11 +24,11 @@ import kotlinx.serialization.encoding.*
  * 
  *
  * @param id 
+ * @param name Problem name (defaults to \"Problem {id}\" if not provided)
  * @param author 
  * @param grade Numeric grade (converted to Fontainebleau on client)
- * @param sectorName Sector name
+ * @param sectorId Sector ID
  * @param holdSequence Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)
- * @param name Problem name (defaults to \"Problem {id}\" if not provided)
  * @param description 
  * @param averageGrade Average of all user-submitted grades (null if no grades)
  * @param averageStars Average of all user ratings (null if no grades)
@@ -40,19 +40,19 @@ data class Problem (
 
     @SerialName(value = "id") @Required val id: kotlin.Int,
 
+    /* Problem name (defaults to \"Problem {id}\" if not provided) */
+    @SerialName(value = "name") @Required val name: kotlin.String,
+
     @SerialName(value = "author") @Required val author: kotlin.String,
 
     /* Numeric grade (converted to Fontainebleau on client) */
     @SerialName(value = "grade") @Required val grade: kotlin.Int,
 
-    /* Sector name */
-    @SerialName(value = "sector_name") @Required val sectorName: kotlin.String,
+    /* Sector ID */
+    @SerialName(value = "sector_id") @Required val sectorId: kotlin.Int,
 
     /* Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End) */
     @SerialName(value = "hold_sequence") @Required val holdSequence: kotlin.collections.List<kotlin.collections.List<kotlin.Int>>,
-
-    /* Problem name (defaults to \"Problem {id}\" if not provided) */
-    @SerialName(value = "name") val name: kotlin.String? = null,
 
     @SerialName(value = "description") val description: kotlin.String? = null,
 

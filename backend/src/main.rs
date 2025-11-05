@@ -1,11 +1,15 @@
 use axum::{
     Router,
+    extract::ConnectInfo,
+    http::{Request, Response},
     routing::{delete, get, post, put},
 };
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::trace::TraceLayer;
+use tracing::info;
 
 mod auth;
 mod handlers;
@@ -17,6 +21,11 @@ use state::AppState;
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .compact()
+        .init();
+
     let data_path = PathBuf::from("./data");
     let sectors_path = PathBuf::from("./sectors");
 
@@ -49,7 +58,7 @@ async fn main() {
 
     const API_V1_AUTH: &str = "/api/v1/auth";
     const API_V1_SECTORS: &str = "/api/v1/sectors";
-    const API_V1_SECTORS_NAME: &str = "/api/v1/sectors/{name}";
+    const API_V1_SECTORS_ID: &str = "/api/v1/sectors/{id}";
     const API_V1_PROBLEMS: &str = "/api/v1/problems";
     const API_V1_PROBLEMS_ID: &str = "/api/v1/problems/{id}";
 
@@ -61,9 +70,9 @@ async fn main() {
         .route(&format!("{}/login", API_V1_AUTH), post(handlers::login))
         .route(&format!("{}/logout", API_V1_AUTH), post(handlers::logout))
         .route(API_V1_SECTORS, get(handlers::list_sectors))
-        .route(API_V1_SECTORS_NAME, get(handlers::get_sector))
+        .route(API_V1_SECTORS_ID, get(handlers::get_sector))
         .route(
-            &format!("{}/image", API_V1_SECTORS_NAME),
+            &format!("{}/image", API_V1_SECTORS_ID),
             get(handlers::get_sector_image),
         )
         .route(API_V1_PROBLEMS, get(handlers::list_problems))
@@ -80,14 +89,38 @@ async fn main() {
             post(handlers::submit_problem_grade),
         )
         .with_state(state)
+        .layer(
+            TraceLayer::new_for_http()
+                .on_request(|request: &Request<_>, _span: &tracing::Span| {
+                    let method = request.method();
+                    let uri = request.uri().path();
+                    let ip = request
+                        .extensions()
+                        .get::<ConnectInfo<SocketAddr>>()
+                        .map(|ConnectInfo(addr)| addr.ip().to_string())
+                        .unwrap_or_else(|| "unknown".to_string());
+                    info!("{} {} from {}", method, uri, ip);
+                })
+                .on_response(
+                    |response: &Response<_>, latency: Duration, _span: &tracing::Span| {
+                        let status = response.status();
+                        info!(
+                            "response {} in {:?}: {:?}",
+                            status,
+                            latency,
+                            response.body()
+                        );
+                    },
+                ),
+        )
         .layer(cors);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
         .expect("Failed to bind to port 3000");
 
-    println!("🚀 Server running on http://0.0.0.0:3000");
-    println!("📚 API available at http://0.0.0.0:3000/api/v1");
+    println!("Server running on http://0.0.0.0:3000");
+    println!("API available at http://0.0.0.0:3000/api/v1");
 
     axum::serve(
         listener,

@@ -40,11 +40,11 @@ import kotlin.math.roundToInt
 @Composable
 fun FilterBar(
     sectors: List<SectorSummary>,
-    selectedSector: String?,
+    selectedSector: SectorSummary?,
     minGrade: Int,
     maxGrade: Int,
     searchAuthor: String,
-    onSectorSelected: (String?) -> Unit,
+    onSectorSelected: (SectorSummary?) -> Unit,
     onGradeRangeChanged: (Int, Int) -> Unit,
     onAuthorChanged: (String) -> Unit,
     onClearFilters: () -> Unit,
@@ -75,7 +75,7 @@ fun FilterBar(
                 modifier = Modifier.weight(1f)
             ) {
                 OutlinedTextField(
-                    value = selectedSector ?: "Vsi sektorji",
+                    value = selectedSector?.name ?: "Vsi sektorji",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Sektor") },
@@ -102,7 +102,7 @@ fun FilterBar(
                         DropdownMenuItem(
                             text = { Text(sector.name) },
                             onClick = {
-                                onSectorSelected(sector.name)
+                                onSectorSelected(sector)
                                 expandedSector = false
                             }
                         )

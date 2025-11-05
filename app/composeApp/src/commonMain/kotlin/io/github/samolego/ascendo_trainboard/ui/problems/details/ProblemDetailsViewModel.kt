@@ -47,14 +47,10 @@ class ProblemDetailsViewModel(
             } else {
                 _state.update { it.copy(isLoading = true) }
             }
-
-            println("Current state before loading: ${_state.value}")
             val problemResult = api.getProblem(_state.value.problemId)
 
-            println("Load problems result: $problemResult")
-
             problemResult.onSuccess { problem ->
-                val sectorResult = api.getSector(problem.sectorName)
+                val sectorResult = api.getSector(problem.sectorId)
 
                 sectorResult.onSuccess { sector ->
                     _state.update {
@@ -92,8 +88,8 @@ class ProblemDetailsViewModel(
         loadProblem(refresh = true)
     }
 
-    fun getSectorImageUrl(sectorName: String): String =
-        api.getSectorImageUrl(sectorName)
+    fun getSectorImageUrl(sectorId: Int): String =
+        api.getSectorImageUrl(sectorId)
 
     fun toggleEditMode() {
         val newEditMode = !state.value.inEditMode

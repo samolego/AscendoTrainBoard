@@ -5,8 +5,8 @@ package io.github.samolego.ascendo_trainboard.ui.authentication
 import androidx.lifecycle.ViewModel
 import io.github.samolego.ascendo_trainboard.api.ApiException
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
-import io.github.samolego.ascendo_trainboard.ui.error.ErrorUiState
-import io.github.samolego.ascendo_trainboard.ui.error.toErrorUiState
+import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
+import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

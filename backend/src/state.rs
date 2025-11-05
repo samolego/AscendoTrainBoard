@@ -1,10 +1,13 @@
-use std::path::PathBuf;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use crate::auth::SessionManager;
 use crate::models::{Problem, SectorMetadata, SectorSummary, Settings, User};
 use crate::rate_limit::RateLimiter;
+use std::fs::File;
+use std::io::BufReader;
 
 pub struct AppState {
     pub settings: Settings,
@@ -17,7 +20,7 @@ pub struct AppState {
     data_path: PathBuf,
     pub sectors_path: PathBuf,
     pub sectors: Vec<SectorSummary>,
-    pub sector_metadata: std::collections::HashMap<String, SectorMetadata>,
+    pub sector_metadata: HashMap<u16, SectorMetadata>,
 }
 
 impl AppState {
@@ -70,7 +73,7 @@ impl AppState {
 
         let (sectors, sector_metadata) = Self::load_sectors(&sectors_path)
             .await
-            .unwrap_or_else(|_| (Vec::new(), std::collections::HashMap::new()));
+            .unwrap_or_else(|_| (Vec::new(), HashMap::new()));
 
         Ok(Self {
             settings,
@@ -87,17 +90,30 @@ impl AppState {
         })
     }
 
+    async fn find_image_file(path: &Path) -> Option<String> {
+        let mut dir_entries = tokio::fs::read_dir(path).await.ok()?;
+        while let Ok(Some(entry)) = dir_entries.next_entry().await {
+            let filename = entry.file_name().to_str()?.to_string();
+            let lower = filename.to_lowercase();
+            if lower.ends_with(".jpg") || lower.ends_with(".jpeg") || lower.ends_with(".png") {
+                return Some(filename);
+            }
+        }
+        None
+    }
+
+    fn read_image_dimensions(path: &Path) -> Option<(u32, u32)> {
+        let file = File::open(path).ok()?;
+        let size = imagesize::reader_size(BufReader::new(file)).ok()?;
+        Some((size.width as u32, size.height as u32))
+    }
+
     async fn load_sectors(
         sectors_path: &PathBuf,
-    ) -> Result<
-        (
-            Vec<SectorSummary>,
-            std::collections::HashMap<String, SectorMetadata>,
-        ),
-        Box<dyn std::error::Error>,
-    > {
-        let mut sectors = Vec::new();
-        let mut metadata_map = std::collections::HashMap::new();
+    ) -> Result<(Vec<SectorSummary>, HashMap<u16, SectorMetadata>), Box<dyn std::error::Error>>
+    {
+        let mut sector_data = Vec::new();
+        let mut max_id = 0u16;
 
         let mut entries = tokio::fs::read_dir(sectors_path).await?;
 
@@ -108,34 +124,96 @@ impl AppState {
                 continue;
             }
 
-            let folder_name = match path.file_name().and_then(|n| n.to_str()) {
-                Some(name) => name.to_string(),
-                None => continue,
+            let Some(folder_name) = path.file_name().and_then(|n| n.to_str()).map(String::from)
+            else {
+                continue;
             };
 
             let metadata_path = path.join("metadata.json");
-
             if !metadata_path.exists() {
                 continue;
             }
 
-            match tokio::fs::read_to_string(&metadata_path).await {
-                Ok(data) => match serde_json::from_str::<SectorMetadata>(&data) {
-                    Ok(metadata) => {
-                        sectors.push(SectorSummary {
-                            name: folder_name.clone(),
-                        });
-                        metadata_map.insert(folder_name, metadata);
+            let Ok(data) = tokio::fs::read_to_string(&metadata_path).await else {
+                continue;
+            };
+
+            let Ok(mut metadata) = serde_json::from_str::<SectorMetadata>(&data) else {
+                continue;
+            };
+
+            // Auto-detect image file if missing
+            let image_filename = if let Some(ref filename) = metadata.image_filename {
+                filename.to_string()
+            } else {
+                match Self::find_image_file(&path).await {
+                    Some(filename) => {
+                        metadata.image_filename = Some(filename.clone());
+                        filename
                     }
-                    Err(_) => continue,
-                },
-                Err(_) => continue,
+                    None => {
+                        eprintln!(
+                            "No image file found in sector directory: {}",
+                            path.display()
+                        );
+                        continue;
+                    }
+                }
+            };
+
+            // Always read image dimensions from the actual image file
+            let image_path = path.join(&image_filename);
+            let Some((width, height)) = Self::read_image_dimensions(&image_path) else {
+                eprintln!(
+                    "Failed to read image dimensions for {}",
+                    image_path.display()
+                );
+                continue;
+            };
+
+            metadata.image_width = width;
+            metadata.image_height = height;
+            metadata.folder_name = folder_name.clone();
+
+            // Track max ID
+            if let Some(id) = metadata.id {
+                max_id = max_id.max(id);
             }
+
+            sector_data.push((folder_name, metadata));
         }
 
-        sectors.sort_by(|a, b| a.name.cmp(&b.name));
+        sector_data.sort_by(|a, b| a.0.cmp(&b.0));
 
-        Ok((sectors, metadata_map))
+        let mut sectors = Vec::new();
+        let mut id2sector_metadata = HashMap::new();
+
+        // Assign IDs and write back if needed
+        for (folder_name, mut metadata) in sector_data {
+            let needs_write = if metadata.id.is_none() {
+                max_id += 1;
+                metadata.id = Some(max_id);
+                true
+            } else {
+                false
+            };
+
+            if needs_write {
+                let metadata_path = sectors_path.join(&folder_name).join("metadata.json");
+                if let Ok(json) = serde_json::to_string_pretty(&metadata) {
+                    let _ = std::fs::write(&metadata_path, json);
+                }
+            }
+
+            let id = metadata.id.unwrap();
+            sectors.push(SectorSummary {
+                id,
+                name: folder_name,
+            });
+            id2sector_metadata.insert(id, metadata);
+        }
+
+        Ok((sectors, id2sector_metadata))
     }
 
     pub fn mark_dirty(&self) {

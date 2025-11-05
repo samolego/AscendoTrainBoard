@@ -28,12 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
-import io.github.samolego.ascendo_trainboard.ui.components.ErrorBanner
+import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorBottomBar
 import io.github.samolego.ascendo_trainboard.ui.navigation.Authenticate
 import io.github.samolego.ascendo_trainboard.ui.navigation.CreateProblem
 import io.github.samolego.ascendo_trainboard.ui.navigation.ProblemDetails
@@ -48,6 +49,11 @@ fun ProblemListScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val listState = rememberLazyListState()
+
+    val sectorId2name by remember(state.sectors) {
+        lazy { state.sectors.associateBy { it.id }.mapValues { it.value.name } }
+    }
+
 
     // Detect when user scrolls near bottom
     LaunchedEffect(listState) {
@@ -77,6 +83,14 @@ fun ProblemListScreen(
                     }
                 },
             )
+        },
+        bottomBar = {
+            if (state.error != null) {
+                ErrorBottomBar(
+                    error = state.error!!,
+                    onDismiss = viewModel::clearError
+                )
+            }
         },
         modifier = modifier,
         floatingActionButton = {
@@ -110,14 +124,6 @@ fun ProblemListScreen(
 
             HorizontalDivider()
 
-            // Error Banner
-            if (state.error != null) {
-                ErrorBanner(
-                    errorMessage = state.error!!,
-                    onDismiss =  viewModel::clearError
-                )
-            }
-
             // Problem List
             Box(modifier = Modifier.fillMaxSize()) {
                 if (state.isLoading && state.problems.isEmpty()) {
@@ -139,6 +145,7 @@ fun ProblemListScreen(
                         items(state.problems) { problem ->
                             ProblemCard(
                                 problem = problem,
+                                sectorName = sectorId2name[problem.sectorId] ?: "Neznan sektor",
                                 onClick = { onNavigateTo(ProblemDetails(problem.id)) }
                             )
                         }

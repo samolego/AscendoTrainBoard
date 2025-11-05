@@ -1,4 +1,4 @@
-package io.github.samolego.ascendo_trainboard.ui.error
+package io.github.samolego.ascendo_trainboard.ui.components.error
 
 import io.github.samolego.ascendo_trainboard.api.ApiException
 import kotlinx.serialization.SerializationException
