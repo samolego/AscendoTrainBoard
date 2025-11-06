@@ -40,7 +40,6 @@ class ProblemDetailsViewModel(
             return
         }
 
-        println("Loading problems, refresh=$refresh")
         viewModelScope.launch {
             if (refresh) {
                 _state.update { it.copy(isLoading = true, problem = null) }
@@ -88,6 +87,8 @@ class ProblemDetailsViewModel(
         loadProblem(refresh = true)
     }
 
+    //fun createProblem()
+
     fun getSectorImageUrl(sectorId: Int): String =
         api.getSectorImageUrl(sectorId)
 
@@ -110,8 +111,6 @@ class ProblemDetailsViewModel(
 
     fun updateHold(holdIndex: Int, hold: ProblemHold) {
         if (state.value.inEditMode) {
-            println("Holds before: ${state.value.editableHolds}")
-            println("Updating hold $holdIndex to $hold")
             _state.update {
                 it.copy(editableHolds = it.editableHolds + (holdIndex to hold))
             }
@@ -131,7 +130,7 @@ class ProblemDetailsViewModel(
     }
 
 
-    fun updateActiveProblem() {
+    fun saveCurrentProblem() {
         val problem = state.value.problem ?: return
 
         viewModelScope.launch {

@@ -20,7 +20,6 @@ import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationScr
 import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsScreen
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsViewModel
-import io.github.samolego.ascendo_trainboard.ui.problems.edit.EditProblemScreen
 import io.github.samolego.ascendo_trainboard.ui.problems.list.ProblemListScreen
 import io.github.samolego.ascendo_trainboard.ui.problems.list.ProblemListViewModel
 
@@ -85,16 +84,18 @@ fun AppNavigation(
             )
         }
 
-
         composable<CreateProblem>(
             deepLinks = listOf(navDeepLink { uriPattern = "$baseUrl/problems/create" }),
             enterTransition = { fadeIn(animationSpec = tween(150)) },
             exitTransition = { fadeOut(animationSpec = tween(150)) }
         ) {
             problemDetailsViewModel.toggleEditMode()
-            EditProblemScreen(
+            ProblemDetailsScreen(
                 viewModel = problemDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
+                chooseSectorDialog = {
+                    // Todo
+                }
             )
         }
 

@@ -48,8 +48,11 @@ import kotlin.time.Instant
 fun ProblemDetailsScreen(
     viewModel: ProblemDetailsViewModel,
     onNavigateBack: () -> Unit,
+    chooseSectorDialog: (@Composable () -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
+    val showDialog = remember { mutableStateOf(chooseSectorDialog != null) }
+
 
     Scaffold(
         topBar = {
@@ -77,7 +80,7 @@ fun ProblemDetailsScreen(
                         IconButton(
                             onClick = {
                                 if (state.inEditMode) {
-                                    viewModel.updateActiveProblem()
+                                    viewModel.saveCurrentProblem()
                                 }
                                 viewModel.toggleEditMode()
                             }
@@ -133,6 +136,8 @@ fun ProblemDetailsScreen(
                 }
             }
         }
+
+        chooseSectorDialog?.invoke()
     }
 }
 

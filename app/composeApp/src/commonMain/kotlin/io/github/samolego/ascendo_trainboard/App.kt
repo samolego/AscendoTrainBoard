@@ -26,7 +26,7 @@ fun App(
         val navController = rememberNavController()
 
         LaunchedEffect(Unit) {
-            authViewModel.restoreSession(platform.storage::loadLoginInfo)
+            authViewModel.restartSession(platform.storage::loadLoginInfo)
         }
 
         AppNavigation(

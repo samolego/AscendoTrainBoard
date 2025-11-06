@@ -85,12 +85,10 @@ fun ProblemListScreen(
             )
         },
         bottomBar = {
-            if (state.error != null) {
-                ErrorBottomBar(
-                    error = state.error!!,
-                    onDismiss = viewModel::clearError
-                )
-            }
+            ErrorBottomBar(
+                error = state.error,
+                onDismiss = viewModel::clearError
+            )
         },
         modifier = modifier,
         floatingActionButton = {

@@ -37,7 +37,7 @@ class AuthenticationViewModel(
     )
     val state: StateFlow<AuthenticationState> = _state.asStateFlow()
 
-    suspend fun restoreSession(loadData: suspend () -> LoginResponse?) {
+    suspend fun restartSession(loadData: suspend () -> LoginResponse?) {
         loadData()?.let {
             api.restartSession(it)
                 .onSuccess { response ->
