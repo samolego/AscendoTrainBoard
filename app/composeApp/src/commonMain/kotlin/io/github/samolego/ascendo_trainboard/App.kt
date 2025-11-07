@@ -1,6 +1,5 @@
 package io.github.samolego.ascendo_trainboard
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -11,12 +10,13 @@ import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationVie
 import io.github.samolego.ascendo_trainboard.ui.navigation.AppNavigation
 import io.github.samolego.ascendo_trainboard.ui.problems.details.ProblemDetailsViewModel
 import io.github.samolego.ascendo_trainboard.ui.problems.list.ProblemListViewModel
+import io.github.samolego.ascendo_trainboard.ui.theme.TrainBoardAppTheme
 
 @Composable
 fun App(
     onNavHostReady: suspend (NavController) -> Unit = {}
 ) {
-    MaterialTheme {
+    TrainBoardAppTheme {
         val platform = getPlatform()
         val api = remember { AscendoApi(baseUrl = "${platform.baseUrl(true)}/api/v1") }
         val problemListViewModel = remember { ProblemListViewModel(api) }
