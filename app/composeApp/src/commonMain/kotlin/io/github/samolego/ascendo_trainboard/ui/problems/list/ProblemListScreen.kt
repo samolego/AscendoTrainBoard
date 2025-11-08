@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -123,23 +124,43 @@ fun ProblemListScreen(
             HorizontalDivider()
 
             // Problem List
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (state.isLoading && state.problems.isEmpty()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                } else if (!state.isLoading && state.problems.isEmpty()) {
-                    EmptyState(
-                        modifier = Modifier.align(Alignment.Center),
-                        titleMessage = "Ni najdenih smeri",
-                        subtitleMessage = "Poskusi olajšati filtre ..."
-                    )
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+            PullToRefreshBox(
+                modifier = Modifier.fillMaxSize(),
+                isRefreshing = state.isLoading && state.problems.isNotEmpty(),
+                onRefresh = viewModel::refresh,
+            ) {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (state.isLoading && state.problems.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillParentMaxHeight(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    } else if (!state.isLoading && state.problems.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillParentMaxHeight(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                EmptyState(
+                                    titleMessage = "Ni najdenih smeri",
+                                    subtitleMessage = "Poskusi olajšati filtre ..."
+                                )
+                            }
+                        }
+                    } else {
                         items(state.problems) { problem ->
                             ProblemCard(
                                 problem = problem,

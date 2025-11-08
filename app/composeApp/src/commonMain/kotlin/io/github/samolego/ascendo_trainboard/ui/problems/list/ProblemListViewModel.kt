@@ -185,6 +185,10 @@ class ProblemListViewModel(
         loadProblems(refresh = true)
     }
 
+    fun refresh() {
+        loadProblems(refresh = true)
+    }
+
     fun isAuthenticated(): Boolean = api.isAuthenticated()
 
     fun clearError() {

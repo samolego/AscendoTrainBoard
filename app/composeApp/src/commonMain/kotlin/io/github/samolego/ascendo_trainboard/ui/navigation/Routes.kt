@@ -7,8 +7,6 @@ import kotlinx.serialization.Serializable
 @SerialName("auth")
 data object Authenticate: Route
 
-
-
 @Serializable
 @SerialName("problems")
 data object Problems: Route
