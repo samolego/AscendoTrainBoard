@@ -25,10 +25,10 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ProblemCard(
+    modifier: Modifier = Modifier,
     problem: ProblemSummary,
     sectorName: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {  // todo - fix hovering; hover isn't rounded shape
     Card(
         modifier = modifier
