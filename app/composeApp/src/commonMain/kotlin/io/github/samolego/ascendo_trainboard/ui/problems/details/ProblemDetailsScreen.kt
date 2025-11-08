@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -18,8 +17,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -31,7 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.HoldType
 import io.github.samolego.ascendo_trainboard.api.ProblemHold
@@ -216,35 +217,30 @@ fun ProblemDetails(
                     Icon(Icons.Default.Delete, contentDescription = "Delete")
                 }
             }
-            Row(
+            SingleChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                HoldType.entries.forEach {
-                    val text = it.getTypeName()
-                    Row(
-                        modifier = Modifier
-                            .selectable(
-                                selected = (it == selectedHold!!.holdType),
-                                onClick = {
-                                    val updatedHold = ProblemHold(selectedHold!!.holdIndex, it)
-                                    onHoldUpdated(selectedHold!!.holdIndex, updatedHold)
-                                    selectedHold = updatedHold
-                                },
-                                role = Role.RadioButton
-                            )
-                            .padding(horizontal = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                HoldType.entries.forEachIndexed { index, type ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = HoldType.entries.size,
+                        ),
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = type.outlineColor,
+                            activeContentColor = Color.Black,
+                        ),
+                        onClick = {
+                            val updatedHold = ProblemHold(selectedHold!!.holdIndex, type)
+                            onHoldUpdated(selectedHold!!.holdIndex, updatedHold)
+                            selectedHold = updatedHold
+                        },
+                        selected = (type == selectedHold!!.holdType),
                     ) {
-                        RadioButton(
-                            selected = (it == selectedHold!!.holdType),
-                            onClick = null
-                        )
                         Text(
-                            text = text,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 8.dp)
+                            text = type.getTypeName(),
+                            //style = MaterialTheme.typography.bodySmall,
+                            //modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }
