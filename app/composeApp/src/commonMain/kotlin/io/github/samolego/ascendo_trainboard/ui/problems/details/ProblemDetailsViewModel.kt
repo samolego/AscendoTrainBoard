@@ -6,6 +6,7 @@ import io.github.samolego.ascendo_trainboard.api.AscendoApi
 import io.github.samolego.ascendo_trainboard.api.ProblemHold
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
+import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ data class ProblemDetailsState(
     val error: String? = null,
     val inEditMode: Boolean = false,
     val canEdit: Boolean = false,
+    val inCreateMode: Boolean = false,
     val editableHolds: Map<Int, ProblemHold> = emptyMap(),
 )
 
@@ -87,8 +89,6 @@ class ProblemDetailsViewModel(
         loadProblem(refresh = true)
     }
 
-    //fun createProblem()
-
     fun getSectorImageUrl(sectorId: Int): String =
         api.getSectorImageUrl(sectorId)
 
@@ -154,8 +154,70 @@ class ProblemDetailsViewModel(
 
             api.updateProblem(updatedProblem.id, request)
             _state.update {
-                it.copy(problem = updatedProblem)
+                it.copy(problem = updatedProblem,)
             }
+        }
+    }
+
+    fun startCreateMode() {
+        if (!api.isAuthenticated()) {
+            return
+        }
+
+        val problem = Problem(
+            id = -1,
+            name = "",
+            author = api.username ?: "",
+            grade = 0,
+            sectorId = -1,
+            holdSequence = listOf(),
+        )
+        _state.update {
+            it.copy(
+                sector = null,
+                inEditMode = true,
+                inCreateMode = true,
+                canEdit = true,
+                problem = problem,
+                editableHolds = problem.holdSequence
+                    .mapNotNull { hold -> ProblemHold.fromList(hold) }
+                    .associateBy { hold -> hold.holdIndex }
+            )
+        }
+    }
+
+    fun setCreateModeSector(sector: SectorSummary) {
+        if (state.value.inCreateMode) {
+            viewModelScope.launch {
+                api.getSector(sector.id)
+                    .onSuccess { sector ->
+                        _state.update {
+                            it.copy(
+                                problem = it.problem?.copy(
+                                    sectorId = sector.id,
+                                ),
+                                sector = sector,
+                            )
+                        }
+                    }
+                    .onFailure {error ->
+                        _state.update {
+                            it.copy(
+                                error = error.message ?: "Napaka pri nalaganju smeri",
+                            )
+                        }
+                    }
+            }
+        }
+    }
+
+    fun setProblemGrade(grade: Int) {
+        if ( state.value.problem == null || grade == state.value.problem?.grade) {
+            return
+        }
+
+        _state.update {
+            it.copy(problem = it.problem!!.copy(grade = grade))
         }
     }
 }

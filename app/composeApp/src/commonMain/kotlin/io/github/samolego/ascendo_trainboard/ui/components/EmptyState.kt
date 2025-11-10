@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 fun EmptyState(
     modifier: Modifier = Modifier,
     titleMessage: String,
-    subtitleMessage: String
+    subtitleMessage: String? = null,
 ) {
     Column(
         modifier = modifier.padding(32.dp),
@@ -28,11 +28,13 @@ fun EmptyState(
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = subtitleMessage,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        subtitleMessage?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }

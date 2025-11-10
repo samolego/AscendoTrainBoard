@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +39,9 @@ import io.github.samolego.ascendo_trainboard.api.HoldType
 import io.github.samolego.ascendo_trainboard.api.ProblemHold
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
+import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
+import io.github.samolego.ascendo_trainboard.ui.components.GradeSelector
 import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
 import kotlin.time.Clock.System.now
 import kotlin.time.ExperimentalTime
@@ -49,11 +52,11 @@ import kotlin.time.Instant
 fun ProblemDetailsScreen(
     viewModel: ProblemDetailsViewModel,
     onNavigateBack: () -> Unit,
-    chooseSectorDialog: (@Composable () -> Unit)? = null,
+    availableSectors: List<SectorSummary>? = null,
 ) {
     val state by viewModel.state.collectAsState()
-    val showDialog = remember { mutableStateOf(chooseSectorDialog != null) }
-
+    var showSectorDialog by remember { mutableStateOf(state.inCreateMode && availableSectors != null) }
+    val editMode by remember { derivedStateOf {  state.inEditMode && state.canEdit } }
 
     Scaffold(
         topBar = {
@@ -61,7 +64,7 @@ fun ProblemDetailsScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (state.inEditMode) {
+                            if (editMode) {
                                 // Discard changes, dialog?? todo
                                 viewModel.toggleEditMode()
                             }
@@ -80,14 +83,14 @@ fun ProblemDetailsScreen(
                     if (state.canEdit && state.problem != null) {
                         IconButton(
                             onClick = {
-                                if (state.inEditMode) {
+                                if (editMode) {
                                     viewModel.saveCurrentProblem()
                                 }
                                 viewModel.toggleEditMode()
                             }
                         ) {
                             val iconVec =
-                                if (state.inEditMode) Icons.Default.Save else Icons.Default.Edit
+                                if (editMode) Icons.Default.Save else Icons.Default.Edit
                             Icon(iconVec, contentDescription = "Edit/Save")
                         }
                     }
@@ -106,13 +109,8 @@ fun ProblemDetailsScreen(
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
-                } else {
-                    if (state.sector == null) {
-                        EmptyState(
-                            titleMessage = "Sektor te smeri ne obstaja",
-                            subtitleMessage = "Poskusi izbrati drugo smer ..."
-                        )
-                    } else if (state.problem == null) {
+                } else if (state.sector != null) {
+                    if (state.problem == null) {
                         EmptyState(
                             titleMessage = "Ta smer ni bila najdena",
                             subtitleMessage = "Poskusi poiskati drugo ..."
@@ -123,8 +121,8 @@ fun ProblemDetailsScreen(
                             problem = state.problem!!,
                             sector = state.sector!!,
                             imageUrl = viewModel.getSectorImageUrl(state.sector!!.id),
-                            editable = state.inEditMode,
-                            holds = if (state.inEditMode) {
+                            editable = editMode,
+                            holds = if (editMode) {
                                 state.editableHolds.values.toList()
                             } else {
                                 state.problem!!.holdSequence.mapNotNull { ProblemHold.fromList(it) }
@@ -132,13 +130,37 @@ fun ProblemDetailsScreen(
                             onHoldUpdated = viewModel::updateHold,
                             onHoldRemoved = viewModel::removeHold,
                             getHoldByIndex = viewModel::getHoldByIndex
-                        )
+                        ) {
+                            if (editMode) {
+                                var grade by remember { mutableStateOf(state.problem?.grade ?: 0) }
+                                // Choose how hard the problem is
+                                // problem description
+                                GradeSelector(
+                                    grade = grade,
+                                    onGradeChanged = {
+                                        viewModel.setProblemGrade(it)
+                                        grade = it
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
 
-        chooseSectorDialog?.invoke()
+        if (showSectorDialog) {
+            SectorChooserDialog(
+                sectors = availableSectors!!,
+                onChoose = {
+                    it?.let {
+                        viewModel.setCreateModeSector(it)
+                        showSectorDialog = false
+                    }
+                },
+                onDismiss = onNavigateBack,
+            )
+        }
     }
 }
 
@@ -154,6 +176,7 @@ fun ProblemDetails(
     onHoldUpdated: (Int, ProblemHold) -> Unit,
     onHoldRemoved: (Int) -> Unit = {},
     getHoldByIndex: (Int) -> ProblemHold? = { null },
+    content: @Composable () -> Unit = {},
 ) {
     var selectedHold by remember { mutableStateOf<ProblemHold?>(null) }
     var lastHoldClickTime by remember {
@@ -239,12 +262,12 @@ fun ProblemDetails(
                     ) {
                         Text(
                             text = type.getTypeName(),
-                            //style = MaterialTheme.typography.bodySmall,
-                            //modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }
             }
         }
+
+        content()
     }
 }

@@ -5,22 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Badge
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,9 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
-import io.github.samolego.ascendo_trainboard.ui.getFrenchGrade
+import io.github.samolego.ascendo_trainboard.ui.components.GradeRangeSelector
+import io.github.samolego.ascendo_trainboard.ui.components.SectorChooserDropdown
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,14 +44,6 @@ fun FilterBar(
 )
 {
     var showAuthorSearch by remember { mutableStateOf(false) }
-    var expandedSector by remember { mutableStateOf(false) }
-
-    var selectedMinGrade by remember(minGrade) { mutableStateOf(minGrade) }
-    var selectedMaxGrade by remember(maxGrade) { mutableStateOf(maxGrade) }
-
-    var currentSliderRange by remember(selectedMinGrade, selectedMaxGrade) {
-        mutableStateOf(selectedMinGrade.toFloat()..selectedMaxGrade.toFloat())
-    }
 
     Column(modifier = modifier) {
         // Sector Filter Dropdown
@@ -69,83 +53,21 @@ fun FilterBar(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ExposedDropdownMenuBox(
-                expanded = expandedSector,
-                onExpandedChange = { expandedSector = it },
-                modifier = Modifier.weight(1f)
-            ) {
-                OutlinedTextField(
-                    value = selectedSector?.name ?: "Vsi sektorji",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Sektor") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSector)
-                    },
-                    modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth(),
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                )
-                ExposedDropdownMenu(
-                    expanded = expandedSector,
-                    onDismissRequest = { expandedSector = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Vsi sektorji") },
-                        onClick = {
-                            onSectorSelected(null)
-                            expandedSector = false
-                        }
-                    )
-                    sectors.forEach { sector ->
-                        DropdownMenuItem(
-                            text = { Text(sector.name) },
-                            onClick = {
-                                onSectorSelected(sector)
-                                expandedSector = false
-                            }
-                        )
-                    }
-                }
-            }
+            SectorChooserDropdown(
+                modifier = Modifier.weight(1f),
+                showAllOption = true,
+                onSectorSelected = onSectorSelected,
+                sectors = sectors,
+                selectedSector = selectedSector,
+            )
         }
 
         // Grade Range Filter
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Badge(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                Text(
-                    text = "${getFrenchGrade(selectedMinGrade)} ≤ ocena ≤ ${getFrenchGrade(selectedMaxGrade)}",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(4.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            RangeSlider(
-                value = currentSliderRange,
-                onValueChange = { range ->
-                    currentSliderRange = range
-                    selectedMinGrade = range.start.roundToInt()
-                    selectedMaxGrade = range.endInclusive.roundToInt()
-                },
-                onValueChangeFinished = {
-                    onGradeRangeChanged(
-                        currentSliderRange.start.roundToInt(),
-                        currentSliderRange.endInclusive.roundToInt()
-                    )
-                },
-                valueRange = 0f..32f,
-                steps = 32,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        GradeRangeSelector(
+            minGrade = minGrade,
+            maxGrade = maxGrade,
+            onGradeRangeChanged = onGradeRangeChanged,
+        )
 
         // Author Search & Clear
         Row(
@@ -176,7 +98,7 @@ fun FilterBar(
                 }
             }
 
-            if (selectedSector != null || selectedMinGrade != MIN_GRADE || selectedMaxGrade != MAX_GRADE || searchAuthor.isNotBlank()) {
+            if (selectedSector != null || searchAuthor.isNotBlank()) {
                 TextButton(onClick = {
                     onClearFilters()
                     showAuthorSearch = false

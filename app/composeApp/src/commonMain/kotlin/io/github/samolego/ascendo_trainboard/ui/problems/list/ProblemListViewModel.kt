@@ -186,6 +186,7 @@ class ProblemListViewModel(
     }
 
     fun refresh() {
+        loadSectors()
         loadProblems(refresh = true)
     }
 

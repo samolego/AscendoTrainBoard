@@ -80,7 +80,10 @@ fun AppNavigation(
 
             ProblemDetailsScreen(
                 viewModel = problemDetailsViewModel,
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = {
+                    problemListViewModel.loadProblems(refresh = true)
+                    navController.popBackStack()
+                },
             )
         }
 
@@ -89,13 +92,14 @@ fun AppNavigation(
             enterTransition = { fadeIn(animationSpec = tween(150)) },
             exitTransition = { fadeOut(animationSpec = tween(150)) }
         ) {
-            problemDetailsViewModel.toggleEditMode()
+            problemDetailsViewModel.startCreateMode()
             ProblemDetailsScreen(
                 viewModel = problemDetailsViewModel,
-                onNavigateBack = { navController.popBackStack() },
-                chooseSectorDialog = {
-                    // Todo
-                }
+                onNavigateBack = {
+                    problemListViewModel.loadProblems(refresh = true)
+                    navController.popBackStack()
+                },
+                availableSectors = problemListViewModel.state.value.sectors,
             )
         }
 
