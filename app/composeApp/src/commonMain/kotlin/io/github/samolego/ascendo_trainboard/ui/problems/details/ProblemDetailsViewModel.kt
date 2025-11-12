@@ -267,4 +267,24 @@ class ProblemDetailsViewModel(
     fun clearError() {
         _state.update { it.copy(error = null) }
     }
+
+    fun deleteProblem(onSuccess: () -> Unit) {
+        if (state.value.problem == null || !state.value.canEdit) {
+            return
+        }
+
+        viewModelScope.launch {
+            api.deleteProblem(state.value.problem!!.id)
+                .onSuccess {
+                    onSuccess()
+                }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            error = err.toErrorUiState(),
+                        )
+                    }
+                }
+        }
+    }
 }

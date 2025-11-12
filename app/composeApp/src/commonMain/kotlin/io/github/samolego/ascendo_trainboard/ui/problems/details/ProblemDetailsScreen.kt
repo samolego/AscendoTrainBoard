@@ -13,8 +13,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +49,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
 import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.components.GradeSelector
+import io.github.samolego.ascendo_trainboard.ui.components.ProblemDeleteDialog
 import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
 import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorBottomBar
 import kotlin.time.Clock.System.now
@@ -62,6 +66,8 @@ fun ProblemDetailsScreen(
     val state by viewModel.state.collectAsState()
     val editMode = state.inEditMode && state.canEdit
     var showSectorDialog by remember { mutableStateOf(state.inCreateMode && availableSectors != null) }
+    var showEditMenu by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val goBack = {
         viewModel.toggleEditMode(false)
@@ -102,17 +108,64 @@ fun ProblemDetailsScreen(
                 ),
                 actions = {
                     if (state.canEdit && state.problem != null) {
-                        IconButton(
-                            onClick = {
-                                if (editMode) {
+                        if (editMode) {
+                            IconButton(
+                                onClick = {
                                     viewModel.saveCurrentProblem()
+                                    viewModel.toggleEditMode()
                                 }
-                                viewModel.toggleEditMode()
+                            ) {
+                                Icon(Icons.Default.Save, contentDescription = "Edit/Save")
                             }
-                        ) {
-                            val iconVec =
-                                if (editMode) Icons.Default.Save else Icons.Default.Edit
-                            Icon(iconVec, contentDescription = "Edit/Save")
+                        } else {
+                            IconButton(
+                                onClick = { showEditMenu = !showEditMenu }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = "Menu"
+                                )
+                            }
+
+                            if (showEditMenu) {
+                                DropdownMenu(
+                                    expanded = showEditMenu,
+                                    onDismissRequest = { showEditMenu = false }
+                                ) {
+                                    val text = if (editMode) "Shrani" else "Uredi"
+                                    DropdownMenuItem(
+                                        text = { Text(text) },
+                                        onClick = {
+                                            if (editMode) {
+                                                viewModel.saveCurrentProblem()
+                                            }
+                                            viewModel.toggleEditMode()
+                                            showEditMenu = false
+                                        },
+                                        leadingIcon = {
+                                            val iconVec = if (editMode) Icons.Default.Save else Icons.Default.Edit
+                                            Icon(
+                                                imageVector = iconVec,
+                                                contentDescription = null
+                                            )
+                                        }
+                                    )
+
+                                    DropdownMenuItem(
+                                        text = { Text("Izbriši") },
+                                        onClick = {
+                                            showDeleteDialog = true
+                                            showEditMenu = false
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = null
+                                            )
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 },
@@ -218,6 +271,21 @@ fun ProblemDetailsScreen(
                     }
                 },
                 onDismiss = goBack,
+            )
+        }
+
+        if (showDeleteDialog) {
+            ProblemDeleteDialog(
+                name = state.problem?.name ?: "",
+                onConfirm = {
+                    showDeleteDialog = false
+                    viewModel.deleteProblem(
+                        onSuccess = goBack
+                    )
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                },
             )
         }
     }
