@@ -61,7 +61,7 @@ fun GradeRangeSelector(
                 )
             },
             valueRange = 0f..32f,
-            steps = 32,
+            steps = 33,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -99,14 +99,14 @@ fun GradeSelector(
                 onGradeChanged(sliderValue.roundToInt())
             },
             valueRange = 0f..32f,
-            steps = 32,
+            steps = 33,
             modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
 @Composable
-private fun GradeBadge(
+fun GradeBadge(
     modifier: Modifier = Modifier,
     grade: Int,
     secondGrade: Int? = null,

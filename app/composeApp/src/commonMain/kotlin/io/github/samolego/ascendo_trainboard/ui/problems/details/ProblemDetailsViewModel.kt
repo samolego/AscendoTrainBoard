@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
 import io.github.samolego.ascendo_trainboard.api.ProblemHold
+import io.github.samolego.ascendo_trainboard.api.generated.models.CreateProblemRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
+import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
+import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +22,7 @@ data class ProblemDetailsState(
     val problem: Problem? = null,
     val sector: Sector? = null,
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: ErrorUiState? = null,
     val inEditMode: Boolean = false,
     val canEdit: Boolean = false,
     val inCreateMode: Boolean = false,
@@ -66,7 +69,7 @@ class ProblemDetailsViewModel(
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            error = error.message ?: "Napaka pri nalaganju sektorja",
+                            error = error.toErrorUiState(),
                             canEdit = false,
                         )
                     }
@@ -75,7 +78,7 @@ class ProblemDetailsViewModel(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = error.message ?: "Napaka pri nalaganju smeri",
+                        error = error.toErrorUiState(),
                         canEdit = false,
                     )
                 }
@@ -97,6 +100,7 @@ class ProblemDetailsViewModel(
         _state.update {
             it.copy(
                 inEditMode = newEditMode,
+                inCreateMode = false,
                 editableHolds = if (newEditMode) {
                     it.problem?.holdSequence
                         ?.mapNotNull { hold -> ProblemHold.fromList(hold) }
@@ -145,16 +149,38 @@ class ProblemDetailsViewModel(
                 holdSequence = updatedHoldSequence,
             )
 
-            val request = UpdateProblemRequest(
-                name = updatedProblem.name,
-                description = updatedProblem.description,
-                grade = updatedProblem.grade,
-                holdSequence = updatedProblem.holdSequence,
-            )
+            val status = if (state.value.inCreateMode) {
+                val request = CreateProblemRequest(
+                    name = updatedProblem.name,
+                    description = updatedProblem.description,
+                    grade = updatedProblem.grade,
+                    holdSequence = updatedProblem.holdSequence,
+                    sectorId = updatedProblem.sectorId,
+                )
 
-            api.updateProblem(updatedProblem.id, request)
-            _state.update {
-                it.copy(problem = updatedProblem,)
+                api.createProblem(request)
+            } else {
+                val request = UpdateProblemRequest(
+                    name = updatedProblem.name,
+                    description = updatedProblem.description,
+                    grade = updatedProblem.grade,
+                    holdSequence = updatedProblem.holdSequence,
+                )
+
+                api.updateProblem(updatedProblem.id, request)
+            }
+
+            status.onSuccess {
+                _state.update {
+                    it.copy(problem = updatedProblem,)
+                }
+            }
+            .onFailure { error ->
+                _state.update {
+                    it.copy(
+                        error = error.toErrorUiState(),
+                    )
+                }
             }
         }
     }
@@ -203,7 +229,7 @@ class ProblemDetailsViewModel(
                     .onFailure {error ->
                         _state.update {
                             it.copy(
-                                error = error.message ?: "Napaka pri nalaganju smeri",
+                                error = error.toErrorUiState(),
                             )
                         }
                     }
@@ -218,6 +244,22 @@ class ProblemDetailsViewModel(
 
         _state.update {
             it.copy(problem = it.problem!!.copy(grade = grade))
+        }
+    }
+
+    fun setProblemDescription(description: String) {
+        if (state.value.problem != null) {
+            _state.update {
+                it.copy(problem = it.problem!!.copy(description = description))
+            }
+        }
+    }
+
+    fun setProblemName(name: String) {
+        if (state.value.problem != null) {
+            _state.update {
+                it.copy(problem = it.problem!!.copy(name = name))
+            }
         }
     }
 }

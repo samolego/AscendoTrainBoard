@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -22,6 +24,8 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,6 +45,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
+import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.components.GradeSelector
 import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
 import kotlin.time.Clock.System.now
@@ -58,6 +63,7 @@ fun ProblemDetailsScreen(
     var showSectorDialog by remember { mutableStateOf(state.inCreateMode && availableSectors != null) }
     val editMode by remember { derivedStateOf {  state.inEditMode && state.canEdit } }
 
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,7 +80,23 @@ fun ProblemDetailsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                title = { Text(state.problem?.name ?: "Smer #${state.problemId}") },
+                title = {
+                    if (editMode) {
+                        TextField(
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                            ),
+                            label = { Text("Ime smeri") },
+                            value = state.problem?.name ?: "",
+                            onValueChange = {
+                                viewModel.setProblemName(it)
+                            }
+                        )
+                    } else {
+                        Text(state.problem?.name ?: "Smer #${state.problemId}")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -142,6 +164,36 @@ fun ProblemDetailsScreen(
                                         grade = it
                                     }
                                 )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                TextField(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    label = { Text("Opis smeri") },
+                                    value = state.problem?.description ?: "",
+                                    onValueChange = {
+                                        viewModel.setProblemDescription(it)
+                                    }
+                                )
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    GradeBadge(
+                                        grade = state.problem?.grade ?: 0,
+                                        modifier = Modifier.padding(8.dp)
+                                    )
+
+                                    state.problem?.description?.let {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.padding(8.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -215,7 +267,7 @@ fun ProblemDetails(
             interactive = editable,
         )
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.End,
         ) {
             Text(
