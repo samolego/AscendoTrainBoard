@@ -30,7 +30,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +47,7 @@ import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
 import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.components.GradeSelector
 import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
+import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorBottomBar
 import kotlin.time.Clock.System.now
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -60,8 +60,13 @@ fun ProblemDetailsScreen(
     availableSectors: List<SectorSummary>? = null,
 ) {
     val state by viewModel.state.collectAsState()
+    val editMode = state.inEditMode && state.canEdit
     var showSectorDialog by remember { mutableStateOf(state.inCreateMode && availableSectors != null) }
-    val editMode by remember { derivedStateOf {  state.inEditMode && state.canEdit } }
+
+    val goBack = {
+        viewModel.toggleEditMode(false)
+        onNavigateBack()
+    }
 
 
     Scaffold(
@@ -69,13 +74,7 @@ fun ProblemDetailsScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(
-                        onClick = {
-                            if (editMode) {
-                                // Discard changes, dialog?? todo
-                                viewModel.toggleEditMode()
-                            }
-                            onNavigateBack()
-                        },
+                        onClick = goBack,
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
@@ -94,7 +93,7 @@ fun ProblemDetailsScreen(
                             }
                         )
                     } else {
-                        Text(state.problem?.name ?: "Smer #${state.problemId}")
+                        Text(state.problem?.name ?: "Nalaganje smeri")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -116,9 +115,17 @@ fun ProblemDetailsScreen(
                             Icon(iconVec, contentDescription = "Edit/Save")
                         }
                     }
-                }
+                },
             )
         },
+        bottomBar = {
+            ErrorBottomBar(
+                error = state.error,
+                onDismiss = {
+                    viewModel.clearError()
+                },
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -210,7 +217,7 @@ fun ProblemDetailsScreen(
                         showSectorDialog = false
                     }
                 },
-                onDismiss = onNavigateBack,
+                onDismiss = goBack,
             )
         }
     }

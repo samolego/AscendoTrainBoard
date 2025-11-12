@@ -92,15 +92,20 @@ fun AppNavigation(
             enterTransition = { fadeIn(animationSpec = tween(150)) },
             exitTransition = { fadeOut(animationSpec = tween(150)) }
         ) {
-            problemDetailsViewModel.startCreateMode()
-            ProblemDetailsScreen(
-                viewModel = problemDetailsViewModel,
-                onNavigateBack = {
-                    problemListViewModel.loadProblems(refresh = true)
-                    navController.popBackStack()
-                },
-                availableSectors = problemListViewModel.state.value.sectors,
-            )
+            val canCreate = problemDetailsViewModel.enterCreateMode()
+            if (!canCreate) {
+                navController.popBackStack()
+                println("NOT AUTHENTICATED!!")
+            } else {
+                ProblemDetailsScreen(
+                    viewModel = problemDetailsViewModel,
+                    onNavigateBack = {
+                        problemListViewModel.loadProblems(refresh = true)
+                        navController.popBackStack()
+                    },
+                    availableSectors = problemListViewModel.state.value.sectors,
+                )
+            }
         }
 
         composable<Authenticate>(

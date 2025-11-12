@@ -135,7 +135,6 @@ class AscendoApi(
             username = response.username
             getPlatform().storage.saveLoginInfo(response)
         }.onFailure {
-            authToken = null
             username = null
         }
     }

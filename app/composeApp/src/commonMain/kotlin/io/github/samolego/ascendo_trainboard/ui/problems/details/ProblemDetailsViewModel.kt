@@ -18,16 +18,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class ProblemDetailsState(
-    val problemId: Int = -1,
     val problem: Problem? = null,
     val sector: Sector? = null,
     val isLoading: Boolean = false,
     val error: ErrorUiState? = null,
     val inEditMode: Boolean = false,
     val canEdit: Boolean = false,
-    val inCreateMode: Boolean = false,
     val editableHolds: Map<Int, ProblemHold> = emptyMap(),
-)
+) {
+    val inCreateMode = problem?.id == -1 && inEditMode
+}
 
 class ProblemDetailsViewModel(
     private val api: AscendoApi
@@ -36,12 +36,9 @@ class ProblemDetailsViewModel(
     private val _state = MutableStateFlow(ProblemDetailsState())
     val state: StateFlow<ProblemDetailsState> = _state.asStateFlow()
 
-    init {
-        loadProblem()
-    }
 
-    fun loadProblem(refresh: Boolean = false) {
-        if (state.value.problemId < 0) {
+    fun loadProblem(refresh: Boolean = false, problemId: Int) {
+        if (problemId < 0) {
             return
         }
 
@@ -51,7 +48,7 @@ class ProblemDetailsViewModel(
             } else {
                 _state.update { it.copy(isLoading = true) }
             }
-            val problemResult = api.getProblem(_state.value.problemId)
+            val problemResult = api.getProblem(problemId)
 
             problemResult.onSuccess { problem ->
                 val sectorResult = api.getSector(problem.sectorId)
@@ -62,6 +59,7 @@ class ProblemDetailsViewModel(
                             problem = problem,
                             sector = sector,
                             isLoading = false,
+                            inEditMode = false,
                             canEdit = api.username == problem.author,
                         )
                     }
@@ -71,6 +69,7 @@ class ProblemDetailsViewModel(
                             isLoading = false,
                             error = error.toErrorUiState(),
                             canEdit = false,
+                            inEditMode = false,
                         )
                     }
                 }
@@ -80,6 +79,7 @@ class ProblemDetailsViewModel(
                         isLoading = false,
                         error = error.toErrorUiState(),
                         canEdit = false,
+                        inEditMode = false,
                     )
                 }
             }
@@ -87,20 +87,17 @@ class ProblemDetailsViewModel(
     }
 
     fun setProblem(problemId: Int) {
-        // We force the update since other things may have changed (auth status etc.)
-        _state.update { it.copy(problemId = problemId) }
-        loadProblem(refresh = true)
+        loadProblem(problemId = problemId, refresh = true)
     }
 
     fun getSectorImageUrl(sectorId: Int): String =
         api.getSectorImageUrl(sectorId)
 
-    fun toggleEditMode() {
-        val newEditMode = !state.value.inEditMode
+    fun toggleEditMode(forceStatus: Boolean? = null) {
+        val newEditMode = forceStatus ?: !state.value.inEditMode
         _state.update {
             it.copy(
                 inEditMode = newEditMode,
-                inCreateMode = false,
                 editableHolds = if (newEditMode) {
                     it.problem?.holdSequence
                         ?.mapNotNull { hold -> ProblemHold.fromList(hold) }
@@ -136,6 +133,9 @@ class ProblemDetailsViewModel(
 
     fun saveCurrentProblem() {
         val problem = state.value.problem ?: return
+        if (!state.value.inEditMode) {
+            return
+        }
 
         viewModelScope.launch {
             val updatedHoldSequence = state.value.editableHolds.values
@@ -172,7 +172,7 @@ class ProblemDetailsViewModel(
 
             status.onSuccess {
                 _state.update {
-                    it.copy(problem = updatedProblem,)
+                    it.copy(problem = updatedProblem)
                 }
             }
             .onFailure { error ->
@@ -185,9 +185,9 @@ class ProblemDetailsViewModel(
         }
     }
 
-    fun startCreateMode() {
+    fun enterCreateMode(): Boolean {
         if (!api.isAuthenticated()) {
-            return
+            return false
         }
 
         val problem = Problem(
@@ -201,15 +201,16 @@ class ProblemDetailsViewModel(
         _state.update {
             it.copy(
                 sector = null,
-                inEditMode = true,
-                inCreateMode = true,
                 canEdit = true,
+                inEditMode = true,
                 problem = problem,
                 editableHolds = problem.holdSequence
                     .mapNotNull { hold -> ProblemHold.fromList(hold) }
                     .associateBy { hold -> hold.holdIndex }
             )
         }
+
+        return true
     }
 
     fun setCreateModeSector(sector: SectorSummary) {
@@ -261,5 +262,9 @@ class ProblemDetailsViewModel(
                 it.copy(problem = it.problem!!.copy(name = name))
             }
         }
+    }
+
+    fun clearError() {
+        _state.update { it.copy(error = null) }
     }
 }

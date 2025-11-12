@@ -74,6 +74,7 @@ fun SectorChooserDialog(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     TextButton(
+                        enabled = selectedSector != null,
                         onClick = {
                             onChoose(selectedSector)
                         }
