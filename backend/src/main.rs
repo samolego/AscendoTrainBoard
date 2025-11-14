@@ -8,6 +8,7 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
@@ -27,6 +28,7 @@ async fn main() {
         .init();
 
     let data_path = PathBuf::from("./data");
+    let page_path = PathBuf::from("./page");
     let sectors_path = PathBuf::from("./sectors");
 
     tokio::fs::create_dir_all(&data_path)
@@ -63,6 +65,7 @@ async fn main() {
     const API_V1_PROBLEMS_ID: &str = "/api/v1/problems/{id}";
 
     let app = Router::new()
+        .fallback_service(ServeDir::new(page_path))
         .route(
             &format!("{}/register", API_V1_AUTH),
             post(handlers::register),
@@ -119,12 +122,15 @@ async fn main() {
         )
         .layer(cors);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
-        .await
-        .expect("Failed to bind to port 3000");
+    let port = if cfg!(debug_assertions) { 3000 } else { 80 };
+    let addr = format!("0.0.0.0:{}", port);
 
-    println!("Server running on http://0.0.0.0:3000");
-    println!("API available at http://0.0.0.0:3000/api/v1");
+    let listener = tokio::net::TcpListener::bind(&addr)
+        .await
+        .unwrap_or_else(|_| panic!("Failed to bind to port {}", port));
+
+    println!("Server running on http://0.0.0.0:{}", port);
+    println!("API available at http://0.0.0.0:{}/api/v1", port);
 
     axum::serve(
         listener,

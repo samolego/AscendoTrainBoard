@@ -32,7 +32,7 @@ impl AppState {
         let default_settings = Settings {
             ap_name: "AscendoTrainBoard".to_string(),
             ap_password: "plezaj-gor".to_string(),
-            admin_users: vec!["admin".to_string()],
+            admin_users: vec![],
         };
         let settings = if settings_path.exists() {
             match tokio::fs::read_to_string(&settings_path).await {

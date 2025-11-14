@@ -25,6 +25,7 @@ import kotlinx.serialization.encoding.*
  *
  * @param token Authentication token to be used in Authorization header
  * @param username 
+ * @param isAdmin 
  */
 @Serializable
 
@@ -33,7 +34,9 @@ data class LoginResponse (
     /* Authentication token to be used in Authorization header */
     @SerialName(value = "token") @Required val token: kotlin.String,
 
-    @SerialName(value = "username") @Required val username: kotlin.String
+    @SerialName(value = "username") @Required val username: kotlin.String,
+
+    @SerialName(value = "is_admin") @Required val isAdmin: kotlin.Boolean
 
 ) {
 

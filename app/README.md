@@ -45,6 +45,10 @@ in your IDE's toolbar or run it directly from the terminal:
     .\gradlew.bat :composeApp:jsBrowserDevelopmentRun
     ```
 
+### Build Production Distributions
+```
+./gradlew wasmJsBrowserDistribution --build-cache --configuration-cache
+```
 ---
 
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),

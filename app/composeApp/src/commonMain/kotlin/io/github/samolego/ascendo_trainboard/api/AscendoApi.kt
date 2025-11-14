@@ -13,7 +13,6 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.SubmitGradeRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
-import io.github.samolego.ascendo_trainboard.api.generated.models.User
 import io.github.samolego.ascendo_trainboard.getPlatform
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -92,7 +91,7 @@ class AscendoApi(
     }
 
     // Auth endpoints
-    suspend fun register(username: String, password: String): Result<User> {
+    suspend fun register(username: String, password: String): Result<LoginResponse> {
         return safeApiCall {
             client.post("$baseUrl/auth/register") {
                 contentType(ContentType.Application.Json)

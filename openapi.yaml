@@ -778,26 +778,12 @@ components:
       required:
         - token
         - username
+        - is_admin
       properties:
         token:
           type: string
           example: 1a2b3c4d5e6f7g8h9i0j
           description: Authentication token to be used in Authorization header
-        username:
-          type: string
-          example: john_doe
-
-    User:
-      type: object
-      required:
-        - id
-        - username
-        - is_admin
-      properties:
-        id:
-          type: integer
-          format: int32
-          example: 1
         username:
           type: string
           example: john_doe

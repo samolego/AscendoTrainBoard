@@ -17,11 +17,6 @@ pub struct User {
     pub salt: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct UserResponse {
-    pub username: String,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
     pub username: String,
@@ -38,6 +33,7 @@ pub struct LoginRequest {
 pub struct LoginResponse {
     pub token: String,
     pub username: String,
+    pub is_admin: bool,
 }
 
 // Hold Type

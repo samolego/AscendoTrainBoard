@@ -111,6 +111,8 @@ pub async fn register(
 
     state.mark_dirty();
 
+    let is_admin = state.is_admin(&payload.username);
+
     let mut sessions = state.sessions.write().await;
     let token = sessions.create_session(payload.username.clone());
 
@@ -119,6 +121,7 @@ pub async fn register(
         Json(LoginResponse {
             token,
             username: payload.username,
+            is_admin,
         }),
     ))
 }
@@ -181,6 +184,8 @@ pub async fn login(
     let username = user.username.clone();
     drop(users);
 
+    let is_admin = state.is_admin(&username);
+
     let mut rate_limiter = state.rate_limiter.write().await;
     rate_limiter.record_successful_attempt(ip);
     drop(rate_limiter);
@@ -188,7 +193,11 @@ pub async fn login(
     let mut sessions = state.sessions.write().await;
     let token = sessions.create_session(username.clone());
 
-    Ok(Json(LoginResponse { token, username }))
+    Ok(Json(LoginResponse {
+        token,
+        username,
+        is_admin,
+    }))
 }
 
 pub async fn logout(
@@ -221,11 +230,16 @@ pub async fn rotate_token(
 ) -> Result<impl IntoResponse, Response> {
     let (username, token) = get_auth_user(&state, &headers).await?;
 
+    let is_admin = state.is_admin(&username);
     let mut sessions = state.sessions.write().await;
     sessions.remove_session(&token);
     let token = sessions.create_session(username.clone());
 
-    Ok(Json(LoginResponse { token, username }))
+    Ok(Json(LoginResponse {
+        token,
+        username,
+        is_admin,
+    }))
 }
 
 // Sector handlers
