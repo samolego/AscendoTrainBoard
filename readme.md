@@ -1,86 +1,41 @@
 # AscendoTrainBoard
 
-AscendoTrainBoard is a self-hosted climbing boulder tracking application, used in our climbing club. Users can submit custom climbing problems (boulders), view them on sector images with hold sequences, and provide grades and ratings. The app promotes community-driven problem creation and grading, making it easy to manage and share climbing routes.
+AscendoTrainBoard je samostojno gostovana aplikacija za beleženje balvanskih plezalnih problemov, ki jo uporablja naš plezalni klub. Uporabniki lahko dodajajo lastne plezalne probleme (balvane), jih pregledajo na slikah sektorjev z označenimi oprimki ter jim dodeljujejo težavnosti in ocene. Aplikacija spodbuja soustvarjanje in skupnostno ocenjevanje, obenem pa omogoča preprosto upravljanje in deljenje plezalnih smeri.
 
-## Features
+## Posnetki zaslona
 
-- **User Authentication**: Basic registration, login and session tokens.
-- **Problem Submission**: Create, edit, and delete climbing problems with hold sequences on predefined sectors.
-- **Grading System**: Users can suggest grades and rate problems (1-5 stars), with averages calculated automatically.
-- **Sector Management**: Static sectors with images and hold definitions, discovered dynamically from the filesystem.
-- **Cross-Platform App**: Kotlin Multiplatform app for Android and Web, providing a seamless experience.
-- **Lightweight Backend**: Rust-based server optimized for low-resource devices like ESP32 or Raspberry Pi.
-- **Self-Hosted**: Run your own instance for privacy and control.
-- **RESTful API**: Full API documented in OpenAPI spec for easy integration.
-- **Admin Functions**: Admin users can manage all problems and users.
+| <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot-list_boulders.png"> | <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot-view.png"> | <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot-create.png"> |
+|:---:|:---:|:---:|
+| Preglej smeri | Prikaži opriimke | Ustvarjaj smeri |
 
-## Architecture
+## Glavne funkcije
 
-AscendoTrainBoard consists of two main components:
+* Prijava in registracija: Osnovni uporabniški računi z žetoni sej.
+* Urejanje problemov: Dodajanje, spreminjanje in brisanje balvanov z natančnimi zaporedji oprimkov na vnaprej pripravljenih sektorjih.
+* Sistem ocenjevanja: Uporabniki lahko predlagajo težavnosti in ocenjujejo probleme (1–5 zvezdic); povprečja se izračunajo samodejno.
+* Upravljanje sektorjev: Statični sektorji z definiranimi oprimki in slikami, ki jih sistem zazna iz datotečnega sistema.
+* Večplatformna aplikacija: Kotlin Multiplatform aplikacija za Android in splet, z enotno uporabniško izkušnjo.
+* Lahka zaledna storitev: Strežnik v Rustu, optimiziran za naprave z zelo malo viri (ESP32, Raspberry Pi).
+* Samostojno gostovanje: Popoln nadzor nad podatki in zasebnostjo.
+* REST API: Celovito dokumentiran v OpenAPI specifikaciji.
+* Administracija: Skrbniki lahko upravljajo vse probleme in uporabnike.
+
+## Arhitektura
+
+AscendoTrainBoard sestavljata dva glavna dela:
 
 ### Backend
-- **Language**: Rust
-- **Purpose**: Provides the REST API, handles authentication, data persistence, and serves sector images.
-- **Deployment**: Designed for ESP32 or Raspberry Pi, with minimal resource usage (binary ~3-4 MB).
-- **Data Storage**: JSON files for users, problems, and settings; periodic auto-save to prevent data loss.
-- **Security**: SHA256 password hashing with salt, bearer token authentication, rate limiting.
-    - note: you'll need to use an https certificate additionally to ensure the traffic is safe
 
-### Frontend App
-- **Language**: Kotlin Multiplatform
-- **Targets**: Android and Web (using Compose Multiplatform).
-- **Purpose**: User interface for browsing sectors, viewing/creating problems, and submitting grades.
-- **API Integration**: Uses generated Kotlin models from the OpenAPI spec.
+Zaledni del je napisan v jeziku Rust. Njegov namen je zagotavljati REST API, upravljati uporabniške račune, skrbeti za shranjevanje podatkov ter streči slike posameznih sektorjev. Zasnovan je tako, da lahko deluje na napravah z zelo omejenimi viri, saj je velikost izvršljive datoteke približno 3–4 MB. Podatki se shranjujejo v JSON datotekah, ki vsebujejo informacije o uporabnikih, problemih in nastavitvah, sistem pa jih periodično samodejno shranjuje. Varnost je zagotovljena z razprševanjem gesel s SHA256 in soljo, avtentikacijo z nosilnimi žetoni (bearer) ter omejevanjem števila zahtevkov.
+Za varno komunikacijo je treba dodati še HTTPS certifikat.
 
-## Getting Started
+### Aplikacija (Frontend)
 
-### Prerequisites
-- Rust toolchain (for backend)
-- Kotlin Multiplatform setup (for app)
-- Node.js and npm (for OpenAPI generator)
+Odjemalska aplikacija je napisana v Kotlin Multiplatform in je namenjena delovanju na Android napravah ter v spletnih brskalnikih s pomočjo ogrodja Compose Multiplatform. Uporabnikom nudi vmesnik za pregledovanje sektorjev, ustvarjanje plezalnih problemov ter oddajanje ocen in težavnosti. Za komunikacijo z zalednim delom uporablja Kotlin modele, ki so samodejno generirani iz OpenAPI specifikacije.
 
-### Setting Up the Backend
-1. Clone the repository and navigate to the `backend` directory.
-2. Follow the setup instructions in [backend/README.md](backend/README.md):
-   - Create data directories and initial JSON files.
-   - Configure settings (e.g., admin users).
-   - Optionally set up sectors with images and metadata.
-3. Build and run the server:
-   ```bash
-   cargo run
-   ```
-   The server starts on `http://0.0.0.0:3000`.
+## Navodila za začetek
 
-### Setting Up the App
-1. Navigate to the `app` directory.
-2. Generate Kotlin models from the OpenAPI spec (see below).
-3. Follow build instructions in [app/README.md](app/README.md) for Android or Web.
-
-### Generating Kotlin Models
-To generate Kotlin data models from the OpenAPI specification:
-```bash
-npx @openapitools/openapi-generator-cli generate \
-  -i openapi.yaml \
-  -g kotlin \
-  -o app/composeApp/ \
-  --global-property models \
-  --package-name io.github.samolego.ascendo_trainboard.api.generated \
-  --additional-properties=library=multiplatform,useCoroutines=true,dateLibrary=string
-```
-
-### Building the App
-- **Android**: `./gradlew :composeApp:assembleDebug`
-- **Web**: `./gradlew :composeApp:wasmJsBrowserDevelopmentRun` (for development)
-
-## API Documentation
-The full API is documented in [openapi.yaml](openapi.yaml). It includes endpoints for authentication, sectors, problems, grades, and admin functions.
-
-For a human-readable version, see [api_docs.md](api_docs.md) (note: this may be outdated; refer to OpenAPI for the latest).
-
-## Development
-- **Backend**: Use `cargo check`, `cargo fmt`, and `RUST_LOG=debug cargo run` for development.
-- **App**: Use IntelliJ IDEA or Android Studio for Kotlin development.
-- **Contributing**: Ensure code follows best practices; run tests if available.
-
-## Privacy
-AscendoTrainBoard can be used anonymously for browsing. Account creation is optional. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for full details.
+Zahtevana orodja
+* Rust razvojno okolje
+* Kotlin Multiplatform (priporočen Android Studio)
+* Node.js in npm (za OpenAPI generator)
