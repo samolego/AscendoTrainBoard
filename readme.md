@@ -4,7 +4,7 @@ AscendoTrainBoard je samostojno gostovana aplikacija za beleženje balvanskih pl
 
 ## Posnetki zaslona
 
-| <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot-list_boulders.png"> | <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot-view.png"> | <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot-create.png"> |
+| <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot_list_boulders.png"> | <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot_view.png"> | <img width="256" src="metadata/en-US/images/phoneScreenshots/screenshot_create.png"> |
 |:---:|:---:|:---:|
 | Preglej smeri | Prikaži opriimke | Ustvarjaj smeri |
 
