@@ -224,21 +224,5 @@ class AscendoApi(
         }
     }
 
-    // Token management
-    fun setToken(token: String) {
-        authToken = token
-    }
-
-    fun getToken(): String? = authToken
-
-    fun clearToken() {
-        authToken = null
-    }
-
     fun isAuthenticated(): Boolean = authToken != null
-
-    // Cleanup
-    fun close() {
-        client.close()
-    }
 }
