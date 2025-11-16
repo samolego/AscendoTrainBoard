@@ -8,7 +8,7 @@ class AndroidPlatform(context: Context) : Platform {
     override val storage: PlatformStorage = AndroidStorage(context)
 
     override fun baseUrl(debug: Boolean): String {
-        return "http://192.168.0.139:${ if (debug) "3000" else "80"}"
+        return "http://192.168.1.1:${ if (debug) "3000" else "80"}"
     }
 }
 

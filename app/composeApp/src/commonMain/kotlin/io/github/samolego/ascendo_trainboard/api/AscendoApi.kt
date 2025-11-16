@@ -38,7 +38,7 @@ import kotlinx.serialization.json.Json
  * Uses generated models from OpenAPI spec.
  */
 class AscendoApi(
-    private val baseUrl: String = "http://localhost:3000/api/v1"
+    private val baseUrl: String = "http://192.168.1.1/api/v1"
 ) {
     private val client = HttpClient {
         install(ContentNegotiation) {

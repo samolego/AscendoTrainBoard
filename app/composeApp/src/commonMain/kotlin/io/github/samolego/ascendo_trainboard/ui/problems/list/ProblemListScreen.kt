@@ -111,6 +111,7 @@ fun ProblemListScreen(
         ) {
             // Filter Bar
             FilterBar(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 sectors = state.sectors,
                 selectedSector = state.selectedSector,
                 minGrade = state.minGrade,
@@ -120,7 +121,6 @@ fun ProblemListScreen(
                 onGradeRangeChanged = viewModel::setGradeRange,
                 onAuthorChanged = viewModel::setAuthorSearch,
                 onClearFilters = viewModel::clearFilters,
-                modifier = Modifier.fillMaxWidth(),
             )
 
             HorizontalDivider()

@@ -194,7 +194,7 @@ class ProblemDetailsViewModel(
             id = -1,
             name = "",
             author = api.username ?: "",
-            grade = 0,
+            grade = 8,
             sectorId = -1,
             holdSequence = listOf(),
         )
