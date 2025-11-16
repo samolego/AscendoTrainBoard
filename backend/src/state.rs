@@ -4,7 +4,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use crate::auth::SessionManager;
-use crate::models::{Problem, SectorMetadata, SectorSummary, Settings, User};
+use crate::models::{APISectorSummary, DiskProblem, DiskSectorMetadata, Settings, User};
 use crate::rate_limit::RateLimiter;
 use std::fs::File;
 use std::io::BufReader;
@@ -12,15 +12,15 @@ use std::io::BufReader;
 pub struct AppState {
     pub settings: Settings,
     pub users: Arc<RwLock<Vec<User>>>,
-    pub problems: Arc<RwLock<Vec<Problem>>>,
+    pub problems: Arc<RwLock<Vec<DiskProblem>>>,
     pub sessions: Arc<RwLock<SessionManager>>,
     pub next_problem_id: Arc<RwLock<u32>>,
     pub dirty: Arc<RwLock<bool>>,
     pub rate_limiter: Arc<RwLock<RateLimiter>>,
     data_path: PathBuf,
     pub sectors_path: PathBuf,
-    pub sectors: Vec<SectorSummary>,
-    pub sector_metadata: HashMap<u16, SectorMetadata>,
+    pub sectors: Vec<APISectorSummary>,
+    pub sector_metadata: HashMap<u16, DiskSectorMetadata>,
 }
 
 impl AppState {
@@ -60,7 +60,7 @@ impl AppState {
         };
 
         let problems_path = data_path.join("problems.json");
-        let problems: Vec<Problem> = if problems_path.exists() {
+        let problems: Vec<DiskProblem> = if problems_path.exists() {
             match tokio::fs::read_to_string(&problems_path).await {
                 Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| Vec::new()),
                 Err(_) => Vec::new(),
@@ -69,7 +69,7 @@ impl AppState {
             Vec::new()
         };
 
-        let next_id = problems.iter().map(|p| p.id).max().unwrap_or(0) + 1;
+        let next_id = problems.iter().map(|p| p.base.id).max().unwrap_or(0) + 1;
 
         let (sectors, sector_metadata) = Self::load_sectors(&sectors_path)
             .await
@@ -110,7 +110,7 @@ impl AppState {
 
     async fn load_sectors(
         sectors_path: &PathBuf,
-    ) -> Result<(Vec<SectorSummary>, HashMap<u16, SectorMetadata>), Box<dyn std::error::Error>>
+    ) -> Result<(Vec<APISectorSummary>, HashMap<u16, DiskSectorMetadata>), Box<dyn std::error::Error>>
     {
         let mut sector_data = Vec::new();
         let mut max_id = 0u16;
@@ -138,7 +138,7 @@ impl AppState {
                 continue;
             };
 
-            let Ok(mut metadata) = serde_json::from_str::<SectorMetadata>(&data) else {
+            let Ok(mut metadata) = serde_json::from_str::<DiskSectorMetadata>(&data) else {
                 continue;
             };
 
@@ -206,7 +206,7 @@ impl AppState {
             }
 
             let id = metadata.id.unwrap();
-            sectors.push(SectorSummary {
+            sectors.push(APISectorSummary {
                 id,
                 name: metadata
                     .display_name

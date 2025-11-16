@@ -2,3 +2,6 @@ target
 openapitools.json
 build
 release
+.venv
+__pycache__
+hold-detection

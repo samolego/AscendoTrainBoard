@@ -245,14 +245,14 @@ pub async fn rotate_token(
 // Sector handlers
 pub async fn list_sectors(
     State(state): State<AppState>,
-) -> Result<Json<Vec<SectorSummary>>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<Vec<APISectorSummary>>, (StatusCode, Json<ErrorResponse>)> {
     Ok(Json(state.sectors.clone()))
 }
 
 pub async fn get_sector(
     State(state): State<AppState>,
     Path(id): Path<u16>,
-) -> Result<Json<Sector>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<APISectorDetail>, (StatusCode, Json<ErrorResponse>)> {
     let metadata = state.sector_metadata.get(&id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
@@ -264,7 +264,7 @@ pub async fn get_sector(
         )
     })?;
 
-    Ok(Json(Sector {
+    Ok(Json(APISectorDetail {
         id: metadata.id.unwrap(),
         name: metadata
             .display_name
@@ -354,14 +354,14 @@ pub async fn list_problems(
 ) -> Result<Json<ProblemList>, (StatusCode, Json<ErrorResponse>)> {
     let problems = state.problems.read().await;
 
-    let filtered: Vec<&Problem> = problems
+    let filtered: Vec<&DiskProblem> = problems
         .iter()
-        .filter(|p| query.sector_id.map_or(true, |s| p.sector_id == s))
-        .filter(|p| query.min_grade.map_or(true, |g| p.grade >= g))
-        .filter(|p| query.max_grade.map_or(true, |g| p.grade <= g))
+        .filter(|p| query.sector_id.map_or(true, |s| p.base.sector_id == s))
+        .filter(|p| query.min_grade.map_or(true, |g| p.base.grade >= g))
+        .filter(|p| query.max_grade.map_or(true, |g| p.base.grade <= g))
         .filter(|p| {
             query.name.as_ref().map_or(true, |name| {
-                p.name.to_lowercase().contains(&name.to_lowercase())
+                p.base.name.to_lowercase().contains(&name.to_lowercase())
             })
         })
         .collect();
@@ -371,11 +371,11 @@ pub async fn list_problems(
     let per_page = query.per_page.unwrap_or(20).min(100).max(1);
 
     let skip = ((page - 1) * per_page) as usize;
-    let summaries: Vec<ProblemSummary> = filtered
+    let summaries: Vec<APIProblemSummary> = filtered
         .into_iter()
         .skip(skip)
         .take(per_page as usize)
-        .map(|p| p.to_summary())
+        .map(|p| p.clone().to_summary())
         .collect();
 
     Ok(Json(ProblemList {
@@ -389,10 +389,10 @@ pub async fn list_problems(
 pub async fn get_problem(
     State(state): State<AppState>,
     Path(id): Path<u32>,
-) -> Result<Json<ProblemDetail>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<APIProblemDetail>, (StatusCode, Json<ErrorResponse>)> {
     let problems = state.problems.read().await;
 
-    let problem = problems.iter().find(|p| p.id == id).ok_or_else(|| {
+    let problem = problems.iter().find(|p| p.base.id == id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {
@@ -403,7 +403,7 @@ pub async fn get_problem(
         )
     })?;
 
-    Ok(Json(problem.to_detail()))
+    Ok(Json(problem.clone().to_detail()))
 }
 
 pub async fn create_problem(
@@ -446,19 +446,21 @@ pub async fn create_problem(
     let id = state.get_next_problem_id().await;
     let name = payload.name.unwrap_or_else(|| format!("Problem {}", id));
 
-    let problem = Problem {
-        id,
-        name,
-        description: payload.description,
-        author: username,
-        grade: payload.grade,
-        sector_id: payload.sector_id,
+    let problem = DiskProblem {
+        base: BaseProblem {
+            id,
+            name,
+            description: payload.description,
+            author: username,
+            grade: payload.grade,
+            sector_id: payload.sector_id,
+            updated_at: now(),
+        },
         hold_sequence: payload.hold_sequence,
         grades: Vec::new(),
-        updated_at: now(),
     };
 
-    let detail = problem.to_detail();
+    let detail = problem.clone().to_detail();
 
     let mut problems = state.problems.write().await;
     problems.push(problem);
@@ -479,20 +481,23 @@ pub async fn update_problem(
 
     let mut problems = state.problems.write().await;
 
-    let problem = problems.iter_mut().find(|p| p.id == id).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Problem not found".to_string(),
-                code: "NOT_FOUND".to_string(),
-                timeout: None,
-            }),
-        )
-            .into_response()
-    })?;
+    let problem = problems
+        .iter_mut()
+        .find(|p| p.base.id == id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Problem not found".to_string(),
+                    code: "NOT_FOUND".to_string(),
+                    timeout: None,
+                }),
+            )
+                .into_response()
+        })?;
 
     let is_admin = state.is_admin(&username);
-    if problem.author != username && !is_admin {
+    if problem.base.author != username && !is_admin {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -519,13 +524,13 @@ pub async fn update_problem(
     }
 
     if let Some(name) = payload.name {
-        problem.name = name;
+        problem.base.name = name;
     }
     if let Some(description) = payload.description {
-        problem.description = Some(description);
+        problem.base.description = Some(description);
     }
     if let Some(grade) = payload.grade {
-        problem.grade = grade;
+        problem.base.grade = grade;
     }
     if let Some(hold_sequence) = payload.hold_sequence {
         problem.hold_sequence = hold_sequence;
@@ -533,9 +538,9 @@ pub async fn update_problem(
         problem.grades.clear();
     }
 
-    problem.updated_at = now();
+    problem.base.updated_at = now();
 
-    let detail = problem.to_detail();
+    let detail = problem.clone().to_detail();
     drop(problems);
 
     state.mark_dirty();
@@ -552,20 +557,23 @@ pub async fn delete_problem(
 
     let mut problems = state.problems.write().await;
 
-    let pos = problems.iter().position(|p| p.id == id).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Problem not found".to_string(),
-                code: "NOT_FOUND".to_string(),
-                timeout: None,
-            }),
-        )
-            .into_response()
-    })?;
+    let pos = problems
+        .iter()
+        .position(|p| p.base.id == id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Problem not found".to_string(),
+                    code: "NOT_FOUND".to_string(),
+                    timeout: None,
+                }),
+            )
+                .into_response()
+        })?;
 
     let is_admin = state.is_admin(&username);
-    if problems[pos].author != username && !is_admin {
+    if problems[pos].base.author != username && !is_admin {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -583,34 +591,6 @@ pub async fn delete_problem(
     state.mark_dirty();
 
     Ok(StatusCode::NO_CONTENT.into_response())
-}
-
-// Grade handlers
-pub async fn get_problem_grades(
-    State(state): State<AppState>,
-    Path(id): Path<u32>,
-) -> Result<Json<ProblemGrades>, (StatusCode, Json<ErrorResponse>)> {
-    let problems = state.problems.read().await;
-
-    let problem = problems.iter().find(|p| p.id == id).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Problem not found".to_string(),
-                code: "NOT_FOUND".to_string(),
-                timeout: None,
-            }),
-        )
-    })?;
-
-    let (avg_grade, avg_stars) = problem.calculate_averages();
-
-    Ok(Json(ProblemGrades {
-        problem_id: id,
-        grades: problem.grades.clone(),
-        average_grade: avg_grade,
-        average_stars: avg_stars,
-    }))
 }
 
 pub async fn submit_problem_grade(
@@ -635,17 +615,20 @@ pub async fn submit_problem_grade(
 
     let mut problems = state.problems.write().await;
 
-    let problem = problems.iter_mut().find(|p| p.id == id).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Problem not found".to_string(),
-                code: "NOT_FOUND".to_string(),
-                timeout: None,
-            }),
-        )
-            .into_response()
-    })?;
+    let problem = problems
+        .iter_mut()
+        .find(|p| p.base.id == id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Problem not found".to_string(),
+                    code: "NOT_FOUND".to_string(),
+                    timeout: None,
+                }),
+            )
+                .into_response()
+        })?;
 
     let existing_pos = problem.grades.iter().position(|g| g.username == username);
 

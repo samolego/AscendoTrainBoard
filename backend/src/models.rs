@@ -51,48 +51,43 @@ pub struct Hold(pub u16, pub HoldType);
 
 // Problem
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Problem {
+pub struct BaseProblem {
     pub id: u32,
     pub name: String,
     pub description: Option<String>,
     pub author: String,
     pub grade: u8,
     pub sector_id: u16,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiskProblem {
+    #[serde(flatten)]
+    pub base: BaseProblem,
     pub hold_sequence: Vec<Hold>,
     pub grades: Vec<Grade>,
-    pub updated_at: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct ProblemSummary {
-    pub id: u32,
-    pub name: String,
-    pub description: Option<String>,
-    pub author: String,
-    pub grade: u8,
-    pub sector_id: u16,
+pub struct APIProblemSummary {
+    #[serde(flatten)]
+    pub base: BaseProblem,
     pub average_grade: Option<f32>,
     pub average_stars: Option<f32>,
-    pub updated_at: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct ProblemDetail {
-    pub id: u32,
-    pub name: String,
-    pub description: Option<String>,
-    pub author: String,
-    pub grade: u8,
-    pub sector_id: u16,
-    pub hold_sequence: Vec<Hold>,
+pub struct APIProblemDetail {
+    #[serde(flatten)]
+    pub base: DiskProblem,
     pub average_grade: Option<f32>,
     pub average_stars: Option<f32>,
-    pub updated_at: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ProblemList {
-    pub problems: Vec<ProblemSummary>,
+    pub problems: Vec<APIProblemSummary>,
     pub total: u32,
     pub page: u32,
     pub per_page: u32,
@@ -124,14 +119,6 @@ pub struct Grade {
     pub created_at: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct ProblemGrades {
-    pub problem_id: u32,
-    pub grades: Vec<Grade>,
-    pub average_grade: Option<f32>,
-    pub average_stars: Option<f32>,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct SubmitGradeRequest {
     pub grade: u8,
@@ -140,7 +127,7 @@ pub struct SubmitGradeRequest {
 
 // Sector
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SectorMetadata {
+pub struct DiskSectorMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image_filename: Option<String>,
     pub holds: Vec<[u16; 4]>,
@@ -157,13 +144,13 @@ pub struct SectorMetadata {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct SectorSummary {
+pub struct APISectorSummary {
     pub id: u16,
     pub name: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct Sector {
+pub struct APISectorDetail {
     pub id: u16,
     pub name: String,
     pub holds: Vec<[u16; 4]>,
@@ -180,7 +167,7 @@ pub struct ErrorResponse {
     pub timeout: Option<u64>,
 }
 
-impl Problem {
+impl DiskProblem {
     pub fn calculate_averages(&self) -> (Option<f32>, Option<f32>) {
         if self.grades.is_empty() {
             return (None, None);
@@ -194,34 +181,21 @@ impl Problem {
         (Some(avg_grade), Some(avg_stars))
     }
 
-    pub fn to_summary(&self) -> ProblemSummary {
+    pub fn to_summary(self) -> APIProblemSummary {
         let (avg_grade, avg_stars) = self.calculate_averages();
-        ProblemSummary {
-            id: self.id,
-            name: self.name.clone(),
-            description: self.description.clone(),
-            author: self.author.clone(),
-            grade: self.grade,
-            sector_id: self.sector_id,
+        APIProblemSummary {
+            base: self.base,
             average_grade: avg_grade,
             average_stars: avg_stars,
-            updated_at: self.updated_at.clone(),
         }
     }
 
-    pub fn to_detail(&self) -> ProblemDetail {
+    pub fn to_detail(self) -> APIProblemDetail {
         let (avg_grade, avg_stars) = self.calculate_averages();
-        ProblemDetail {
-            id: self.id,
-            name: self.name.clone(),
-            description: self.description.clone(),
-            author: self.author.clone(),
-            grade: self.grade,
-            sector_id: self.sector_id,
-            hold_sequence: self.hold_sequence.clone(),
+        APIProblemDetail {
+            base: self,
             average_grade: avg_grade,
             average_stars: avg_stars,
-            updated_at: self.updated_at.clone(),
         }
     }
 }
