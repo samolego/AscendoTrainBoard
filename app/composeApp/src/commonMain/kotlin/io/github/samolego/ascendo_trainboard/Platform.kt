@@ -6,7 +6,7 @@ interface Platform {
     val name: String
     val storage: PlatformStorage
 
-    fun baseUrl(debug: Boolean): String
+    fun baseUrl(): String
 }
 
 expect fun getPlatform(): Platform

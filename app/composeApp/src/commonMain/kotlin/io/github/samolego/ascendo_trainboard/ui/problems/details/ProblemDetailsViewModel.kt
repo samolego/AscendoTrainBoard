@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
 import io.github.samolego.ascendo_trainboard.api.ProblemHold
 import io.github.samolego.ascendo_trainboard.api.generated.models.CreateProblemRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.Grade
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
@@ -56,7 +57,7 @@ class ProblemDetailsViewModel(
                 sectorResult.onSuccess { sector ->
                     _state.update {
                         it.copy(
-                            problem = problem,
+                            problem = problem.copy(grades = listOf(Grade(username = "tinja", grade = problem.grade + 1, stars = 3, createdAt = "2023-01-01T00:00:00Z")), averageGrade = 4.513222f, averageStars = 3.4934924f),
                             sector = sector,
                             isLoading = false,
                             inEditMode = false,
@@ -197,6 +198,7 @@ class ProblemDetailsViewModel(
             grade = 8,
             sectorId = -1,
             holdSequence = listOf(),
+            grades = listOf(),
         )
         _state.update {
             it.copy(

@@ -118,19 +118,20 @@ fun GradeSelector(
 @Composable
 fun GradeBadge(
     modifier: Modifier = Modifier,
+    usePrefixText: Boolean = true,
     grade: Int,
     secondGrade: Int? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val text = if (secondGrade == null || secondGrade == grade) {
-        "Ocena = ${getFrenchGrade(grade)}"
-    } else {
-        "${getFrenchGrade(grade)} ≤ ocena ≤ ${getFrenchGrade(secondGrade)}"
+    val text = when {
+        !usePrefixText -> getFrenchGrade(grade)
+        secondGrade == null || secondGrade == grade -> "Ocena = ${getFrenchGrade(grade)}"
+        else -> "${getFrenchGrade(grade)} ≤ ocena ≤ ${getFrenchGrade(secondGrade)}"
     }
 
     Badge(
         modifier = modifier
-            .clip(RoundedCornerShape(64f))
+            .clip(RoundedCornerShape(64.dp))
             .then(
                 if (onClick != null) {
                     Modifier.clickable { onClick() }

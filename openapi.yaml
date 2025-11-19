@@ -459,33 +459,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /problems/{id}/grades:
-    get:
-      tags:
-        - Grades
-      summary: Retrieve all grades/ratings for a specific problem
-      operationId: getProblemGrades
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-          description: Problem ID
-      responses:
-        "200":
-          description: Problem grades and ratings
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProblemGrades"
-        "404":
-          description: Problem not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
     post:
       tags:
         - Grades
@@ -945,6 +918,7 @@ components:
         - type: object
           required:
             - hold_sequence
+            - grades
           properties:
             hold_sequence:
               type: array
@@ -957,6 +931,11 @@ components:
                 minItems: 2
                 maxItems: 2
               example: [[0, 0], [1, 2], [124, 3]]
+            grades:
+              type: array
+              description: Array of user-submitted grades and ratings for this problem
+              items:
+                $ref: "#/components/schemas/Grade"
 
     ProblemList:
       type: object
@@ -1076,35 +1055,6 @@ components:
           type: string
           format: date-time
           example: "2025-01-15T10:30:00Z"
-
-    ProblemGrades:
-      type: object
-      required:
-        - problem_id
-        - grades
-        - average_grade
-        - average_stars
-      properties:
-        problem_id:
-          type: integer
-          format: int32
-          example: 1
-        grades:
-          type: array
-          items:
-            $ref: "#/components/schemas/Grade"
-        average_grade:
-          type: number
-          format: float
-          nullable: true
-          example: 6.5
-          description: Calculated average of all submitted grades
-        average_stars:
-          type: number
-          format: float
-          nullable: true
-          example: 4.5
-          description: Calculated average of all star ratings
 
     SubmitGradeRequest:
       type: object

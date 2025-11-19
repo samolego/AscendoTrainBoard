@@ -1,7 +1,6 @@
 package io.github.samolego.ascendo_trainboard.ui.problems.details
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,18 +9,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,12 +49,15 @@ import io.github.samolego.ascendo_trainboard.api.ProblemHold
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import io.github.samolego.ascendo_trainboard.ui.components.AvgStarsBadge
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
 import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.components.GradeSelector
 import io.github.samolego.ascendo_trainboard.ui.components.ProblemDeleteDialog
+import io.github.samolego.ascendo_trainboard.ui.components.UserRatingCard
 import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
 import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorBottomBar
+import kotlin.math.roundToInt
 import kotlin.time.Clock.System.now
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -181,86 +184,122 @@ fun ProblemDetailsScreen(
                     viewModel.clearError()
                 },
             )
+        },
+        floatingActionButton = {
+            if (!editMode) {
+                FloatingActionButton(
+                    onClick = {
+                        // Rate
+                    }
+                ) {
+                    Icon(Icons.Default.Star, contentDescription = "Rate")
+                }
+            }
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .padding(16.dp),
         ) {
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+            if (state.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else if (state.sector != null) {
+                if (state.problem == null) {
+                    EmptyState(
+                        titleMessage = "Ta smer ni bila najdena",
+                        subtitleMessage = "Poskusi poiskati drugo ..."
                     )
-                } else if (state.sector != null) {
-                    if (state.problem == null) {
-                        EmptyState(
-                            titleMessage = "Ta smer ni bila najdena",
-                            subtitleMessage = "Poskusi poiskati drugo ..."
+                } else {
+                    ProblemDetails(
+                        problem = state.problem!!,
+                        sector = state.sector!!,
+                        imageUrl = viewModel.getSectorImageUrl(state.sector!!.id),
+                        editable = editMode,
+                        holds = if (editMode) {
+                            state.editableHolds.values.toList()
+                        } else {
+                            state.problem!!.holdSequence.mapNotNull { ProblemHold.fromList(it) }
+                        },
+                        onHoldUpdated = viewModel::updateHold,
+                        onHoldRemoved = viewModel::removeHold,
+                        getHoldByIndex = viewModel::getHoldByIndex
+                    )
+
+                    if (editMode) {
+                        var grade by remember { mutableStateOf(state.problem?.grade ?: 0) }
+                        // Choose how hard the problem is
+                        // problem description
+                        GradeSelector(
+                            grade = grade,
+                            onGradeChanged = {
+                                viewModel.setProblemGrade(it)
+                                grade = it
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        TextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Opis smeri") },
+                            value = state.problem?.description ?: "",
+                            onValueChange = {
+                                viewModel.setProblemDescription(it)
+                            }
                         )
                     } else {
-                        ProblemDetails(
-                            modifier = Modifier.fillMaxSize()
-                                .padding(16.dp)
-                                .verticalScroll(rememberScrollState()),
-                            problem = state.problem!!,
-                            sector = state.sector!!,
-                            imageUrl = viewModel.getSectorImageUrl(state.sector!!.id),
-                            editable = editMode,
-                            holds = if (editMode) {
-                                state.editableHolds.values.toList()
-                            } else {
-                                state.problem!!.holdSequence.mapNotNull { ProblemHold.fromList(it) }
-                            },
-                            onHoldUpdated = viewModel::updateHold,
-                            onHoldRemoved = viewModel::removeHold,
-                            getHoldByIndex = viewModel::getHoldByIndex
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            if (editMode) {
-                                var grade by remember { mutableStateOf(state.problem?.grade ?: 0) }
-                                // Choose how hard the problem is
-                                // problem description
-                                GradeSelector(
-                                    grade = grade,
-                                    onGradeChanged = {
-                                        viewModel.setProblemGrade(it)
-                                        grade = it
-                                    }
-                                )
+                            GradeBadge(
+                                grade = state.problem?.grade ?: 0,
+                                modifier = Modifier.padding(8.dp)
+                            )
 
+                            state.problem?.description?.let {
                                 Spacer(modifier = Modifier.height(8.dp))
-
-                                TextField(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    label = { Text("Opis smeri") },
-                                    value = state.problem?.description ?: "",
-                                    onValueChange = {
-                                        viewModel.setProblemDescription(it)
-                                    }
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(8.dp)
                                 )
-                            } else {
-                                Column(
-                                    horizontalAlignment = Alignment.Start,
-                                    modifier = Modifier.fillMaxWidth()
+                            }
+
+                            if (state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    GradeBadge(
-                                        grade = state.problem?.grade ?: 0,
-                                        modifier = Modifier.padding(8.dp)
+                                    Text("Povprečno št. zvezdic")
+                                    AvgStarsBadge(
+                                        stars = state.problem!!.averageStars!!,
                                     )
+                                }
 
-                                    state.problem?.description?.let {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = it,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.padding(8.dp)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Povprečna ocena")
+                                    GradeBadge(
+                                        grade = state.problem!!.averageGrade!!.roundToInt(),
+                                        usePrefixText = false,
+                                    )
+                                }
+                                LazyColumn {
+                                    items(state.problem!!.grades) { grade ->
+                                        UserRatingCard(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            grade = grade,
                                         )
-                                    }
-
-                                    LazyColumn(state.grades) {
-
                                     }
                                 }
                             }
@@ -312,7 +351,6 @@ fun ProblemDetails(
     onHoldUpdated: (Int, ProblemHold) -> Unit,
     onHoldRemoved: (Int) -> Unit = {},
     getHoldByIndex: (Int) -> ProblemHold? = { null },
-    content: @Composable () -> Unit = {},
 ) {
     var selectedHold by remember { mutableStateOf<ProblemHold?>(null) }
     var lastHoldClickTime by remember {
@@ -350,6 +388,7 @@ fun ProblemDetails(
             selectedHold = selectedHold,
             interactive = editable,
         )
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.End,
@@ -403,7 +442,5 @@ fun ProblemDetails(
                 }
             }
         }
-
-        content()
     }
 }
