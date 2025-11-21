@@ -51,14 +51,19 @@ fun ZoomableSectorProblemImage(
 
 
     val holdRects = remember(sector.holds) {
-        sector.holds.map { rect ->
-            Rect(
-                left = rect[0].toFloat(),
-                top = rect[1].toFloat(),
-                right = rect[2].toFloat(),
-                bottom = rect[3].toFloat()
-            )
-        }
+        sector.holds
+            .mapIndexed { ix, rect ->
+                    HoldRect(Rect(
+                        left = rect[0].toFloat(),
+                        top = rect[1].toFloat(),
+                        right = rect[2].toFloat(),
+                        bottom = rect[3].toFloat()
+                    ),
+                   ix
+                )
+            }
+            // We sort them so that the smallest ones are checked for click first
+            .sortedBy { it.rect.width * it.rect.height }
     }
 
     Box(
@@ -135,22 +140,12 @@ fun ZoomableSectorProblemImage(
 
                             val adjustedX = ((tapPosition.x - centerX - zoomOffsetX) / zoom) + centerX
                             val adjustedY = ((tapPosition.y - centerY - zoomOffsetY) / zoom) + centerY
-                            val adjustedTapPosition = Offset(adjustedX, adjustedY)
+                            val adjustedTapPosition = Offset(adjustedX / imageScale, adjustedY / imageScale)
 
-                            val clickedIndex = holdRects.indexOfFirst { rect ->
-                                val scaledRect = Rect(
-                                    left = rect.left * imageScale,
-                                    top = rect.top * imageScale,
-                                    right = rect.right * imageScale,
-                                    bottom = rect.bottom * imageScale
-                                )
-                                scaledRect.contains(adjustedTapPosition)
-                            }
+                            val clickedHold = holdRects.firstOrNull { it.rect.contains(adjustedTapPosition) }
 
-                            if (clickedIndex != -1) {
-                                onHoldClicked(clickedIndex)
-                                //val hold = sector.holds[clickedIndex]
-                                //println("Hold clicked: $hold")
+                            if (clickedHold != null) {
+                                onHoldClicked(clickedHold.originalIndex)
                             }
                         }
                     }
@@ -190,7 +185,8 @@ fun ZoomableSectorProblemImage(
         ) {
             val scale = size.width / sector.imageWidth
 
-            val markHold = { rect: Rect, color: Color, selected: Boolean ->
+            val markHold = { holdRect: HoldRect, color: Color, selected: Boolean ->
+                val rect = holdRect.rect
                 val scaledRect = Rect(
                     left = rect.left * scale,
                     top = rect.top * scale,
@@ -226,8 +222,8 @@ fun ZoomableSectorProblemImage(
 
             if (interactive) {
                 holdRects.forEach { rect ->
-                    markHold(rect, Color.LightGray, false)
-                }
+                        markHold(rect, Color.LightGray.copy(alpha = 0.5f), false)
+                    }
             }
 
             holds.forEach { hold ->
@@ -244,9 +240,15 @@ fun ZoomableSectorProblemImage(
                         bottom = sectorHold[3].toFloat()
                     )
 
-                    markHold(rect, color, index == selectedHold?.holdIndex && interactive)
+                    markHold(HoldRect(rect, index), color, index == selectedHold?.holdIndex && interactive)
                 }
             }
         }
     }
 }
+
+
+private data class HoldRect(
+    val rect: Rect,
+    val originalIndex: Int
+)
