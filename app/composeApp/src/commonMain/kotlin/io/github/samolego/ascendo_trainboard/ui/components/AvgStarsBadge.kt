@@ -1,5 +1,7 @@
 package io.github.samolego.ascendo_trainboard.ui.components
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,12 +26,21 @@ fun AvgStarsBadge(
             .clip(RoundedCornerShape(64.dp)),
         containerColor = MaterialTheme.colorScheme.primaryContainer,
     ) {
-        Text("$stars")
-        Icon(
-            Icons.Filled.Star,
-            contentDescription = null,
-            tint = Color.Yellow,
-            modifier = Modifier.size(16.dp)
-        )
+        Row(
+            modifier = Modifier.padding(4.dp),
+        ) {
+            // What KMP does not have decimal print??
+            val starText = "$stars".take(4)  // not rounded, but anyway
+            Text(
+                starText,
+                style = MaterialTheme.typography.labelLarge,
+            )
+            Icon(
+                Icons.Filled.Star,
+                contentDescription = null,
+                tint = Color.Yellow,
+                modifier = Modifier.size(16.dp)
+            )
+        }
     }
 }
