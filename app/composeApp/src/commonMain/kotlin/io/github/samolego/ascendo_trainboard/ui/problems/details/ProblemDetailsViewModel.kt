@@ -57,7 +57,7 @@ class ProblemDetailsViewModel(
                 sectorResult.onSuccess { sector ->
                     _state.update {
                         it.copy(
-                            problem = problem.copy(grades = listOf(Grade(username = "tinja", grade = problem.grade + 1, stars = 3, createdAt = "2023-01-01T00:00:00Z")), averageGrade = 4.513222f, averageStars = 3.4934924f),
+                            problem = problem.copy(grades = MutableList(100) {Grade(username = "tdasdadvinja", grade = problem.grade + 1, stars = 3, createdAt = "2023-01-01T00:00:00Z") }, averageGrade = 4.513222f, averageStars = 3.4934924f),
                             sector = sector,
                             isLoading = false,
                             inEditMode = false,

@@ -118,8 +118,8 @@ fun GradeSelector(
 @Composable
 fun GradeBadge(
     modifier: Modifier = Modifier,
-    usePrefixText: Boolean = true,
     grade: Int,
+    usePrefixText: Boolean = true,
     secondGrade: Int? = null,
     onClick: (() -> Unit)? = null,
 ) {
