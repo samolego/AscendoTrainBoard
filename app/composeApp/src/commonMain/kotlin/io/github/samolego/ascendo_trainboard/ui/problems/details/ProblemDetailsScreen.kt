@@ -191,7 +191,7 @@ fun ProblemDetailsScreen(
                 },
             )
         },
-        sheetPeekHeight = if (shouldShowGradesInfo && !isWideScreen) 96.dp else 0.dp,  // TODO
+        sheetPeekHeight = if (shouldShowGradesInfo && !isWideScreen) 96.dp else 0.dp,
         sheetSwipeEnabled = shouldShowGradesInfo && !isWideScreen,
         sheetContent = {
             if (shouldShowGradesInfo && !isWideScreen) {
