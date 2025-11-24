@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -39,6 +41,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,12 +80,19 @@ fun ProblemDetailsScreen(
     var showSectorDialog by remember { mutableStateOf(state.inCreateMode && availableSectors != null) }
     var showEditMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var isWideScreen by remember { mutableStateOf(false) }
 
     val goBack = {
         viewModel.toggleEditMode(false)
         onNavigateBack()
     }
+    val shouldShowGradesInfo by remember { derivedStateOf({!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null }) }
 
+    val gradesInfo = @Composable {
+        if (!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null) {
+            GradesInfo(problem = state.problem!!)
+        }
+    }
 
     BottomSheetScaffold(
         topBar = {
@@ -181,63 +191,25 @@ fun ProblemDetailsScreen(
                 },
             )
         },
-        sheetPeekHeight = if (!editMode && false) 96.dp else 0.dp,
-        sheetSwipeEnabled = !editMode,
+        sheetPeekHeight = if (shouldShowGradesInfo && !isWideScreen) 96.dp else 0.dp,  // TODO
+        sheetSwipeEnabled = shouldShowGradesInfo && !isWideScreen,
         sheetContent = {
-            if (!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null) {
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .fillMaxWidth(),
-                ) {
-                    Text(
-                        "Povprečje",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.align(Alignment.CenterStart),
-                    )
-
-                    AvgStarsBadge(
-                        modifier = Modifier.align(Alignment.Center),
-                        stars = state.problem!!.averageStars!!,
-                    )
-
-                    GradeBadge(
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                        grade = state.problem!!.averageGrade!!.roundToInt(),
-                        usePrefixText = false,
-                    )
-                }
-
-                val items = state.problem!!.grades
-                LazyVerticalGrid(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    columns = GridCells.Adaptive(minSize = 160.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(items) { grade ->
-                        UserRatingCard(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            grade = grade,
-                        )
-                    }
-                }
+            if (shouldShowGradesInfo && !isWideScreen) {
+                GradesInfo(problem = state.problem!!)
             }
-        }
+        },
     ) { paddingValues ->
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            val isWideScreen = maxWidth > 600.dp
+            isWideScreen = maxWidth > maxHeight && maxWidth > 600.dp
 
             val outerScrollModifier =
                 if (isWideScreen) Modifier else Modifier.verticalScroll(rememberScrollState())
 
             Column(modifier = outerScrollModifier.fillMaxSize()) {
-
                 if (state.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp)
@@ -297,20 +269,33 @@ fun ProblemDetailsScreen(
                                         }
                                     )
                                 } else {
-                                    GradeBadge(
-                                        grade = state.problem?.grade ?: 0,
-                                        modifier = Modifier.padding(8.dp)
-                                    )
-                                    state.problem?.description?.let {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = it,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.padding(8.dp)
-                                        )
+                                    val content = @Composable {
+                                        Column {
+                                            GradeBadge(
+                                                grade = state.problem?.grade ?: 0,
+                                                modifier = Modifier.padding(8.dp)
+                                            )
+                                            state.problem?.description?.let {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = it,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    modifier = Modifier.padding(8.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    if (isWideScreen) {
+                                        GradesInfo(problem = state.problem!!) {
+                                            content()
+                                        }
+                                    } else {
+                                        content()
                                     }
                                 }
                             }
+
                         }
 
                         if (isWideScreen) {
@@ -322,7 +307,7 @@ fun ProblemDetailsScreen(
                             ) {
                                 Column(
                                     Modifier
-                                        .weight(1f)
+                                        .weight(2f)
                                         .padding(end = 8.dp)
                                         .verticalScroll(rememberScrollState())
                                 ) {
@@ -332,7 +317,6 @@ fun ProblemDetailsScreen(
                                     Modifier
                                         .weight(1f)
                                         .padding(start = 8.dp)
-                                        .verticalScroll(rememberScrollState())
                                 ) {
                                     rightContent()
                                 }
@@ -498,6 +482,67 @@ fun ProblemDetails(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun GradesInfo(
+    problem: Problem,
+    preContent: @Composable () -> Unit = {}
+) {
+
+    val items = problem.grades
+    LazyVerticalGrid(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        columns = GridCells.Adaptive(minSize = 160.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            preContent()
+        }
+
+        if (items.isNotEmpty()) {
+            stickyHeader {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 2.dp
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .fillMaxWidth(),
+                    ) {
+                        Text(
+                            "Povprečje",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.align(Alignment.CenterStart),
+                        )
+
+                        AvgStarsBadge(
+                            modifier = Modifier.align(Alignment.Center),
+                            stars = problem.averageStars!!,
+                        )
+
+                        GradeBadge(
+                            modifier = Modifier.align(Alignment.CenterEnd),
+                            grade = problem.averageGrade!!.roundToInt(),
+                            usePrefixText = false,
+                        )
+                    }
+
+                }
+            }
+            items(items) { grade ->
+                UserRatingCard(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    grade = grade,
+                )
             }
         }
     }
