@@ -2,6 +2,7 @@ package io.github.samolego.ascendo_trainboard.ui.problems.details
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,7 +29,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -84,168 +84,163 @@ fun ProblemDetailsScreen(
     }
 
 
-    Scaffold(
-        bottomBar = {
-            ErrorBottomBar(
-                error = state.error,
-                onDismiss = {
-                    viewModel.clearError()
+    BottomSheetScaffold(
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(
+                        onClick = goBack,
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
                 },
-            )
-        },
-    ) { paddingValues ->
-        BottomSheetScaffold(
-            topBar = {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(
-                            onClick = goBack,
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                    title = {
+                title = {
+                    if (editMode) {
+                        TextField(
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                            ),
+                            label = { Text("Ime smeri") },
+                            value = state.problem?.name ?: "",
+                            onValueChange = {
+                                viewModel.setProblemName(it)
+                            }
+                        )
+                    } else {
+                        Text(state.problem?.name ?: "Nalaganje smeri")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                actions = {
+                    if (state.canEdit && state.problem != null) {
                         if (editMode) {
-                            TextField(
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                ),
-                                label = { Text("Ime smeri") },
-                                value = state.problem?.name ?: "",
-                                onValueChange = {
-                                    viewModel.setProblemName(it)
+                            IconButton(
+                                onClick = {
+                                    viewModel.saveCurrentProblem()
+                                    viewModel.toggleEditMode()
                                 }
-                            )
+                            ) {
+                                Icon(Icons.Default.Save, contentDescription = "Edit/Save")
+                            }
                         } else {
-                            Text(state.problem?.name ?: "Nalaganje smeri")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-                    actions = {
-                        if (state.canEdit && state.problem != null) {
-                            if (editMode) {
-                                IconButton(
-                                    onClick = {
-                                        viewModel.saveCurrentProblem()
-                                        viewModel.toggleEditMode()
-                                    }
+                            IconButton(
+                                onClick = { showEditMenu = !showEditMenu }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = "Menu"
+                                )
+                            }
+
+                            if (showEditMenu) {
+                                DropdownMenu(
+                                    expanded = showEditMenu,
+                                    onDismissRequest = { showEditMenu = false }
                                 ) {
-                                    Icon(Icons.Default.Save, contentDescription = "Edit/Save")
-                                }
-                            } else {
-                                IconButton(
-                                    onClick = { showEditMenu = !showEditMenu }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.MoreVert,
-                                        contentDescription = "Menu"
+                                    val text = if (editMode) "Shrani" else "Uredi"
+                                    DropdownMenuItem(
+                                        text = { Text(text) },
+                                        onClick = {
+                                            if (editMode) {
+                                                viewModel.saveCurrentProblem()
+                                            }
+                                            viewModel.toggleEditMode()
+                                            showEditMenu = false
+                                        },
+                                        leadingIcon = {
+                                            val iconVec =
+                                                if (editMode) Icons.Default.Save else Icons.Default.Edit
+                                            Icon(
+                                                imageVector = iconVec,
+                                                contentDescription = null
+                                            )
+                                        }
                                     )
-                                }
 
-                                if (showEditMenu) {
-                                    DropdownMenu(
-                                        expanded = showEditMenu,
-                                        onDismissRequest = { showEditMenu = false }
-                                    ) {
-                                        val text = if (editMode) "Shrani" else "Uredi"
-                                        DropdownMenuItem(
-                                            text = { Text(text) },
-                                            onClick = {
-                                                if (editMode) {
-                                                    viewModel.saveCurrentProblem()
-                                                }
-                                                viewModel.toggleEditMode()
-                                                showEditMenu = false
-                                            },
-                                            leadingIcon = {
-                                                val iconVec = if (editMode) Icons.Default.Save else Icons.Default.Edit
-                                                Icon(
-                                                    imageVector = iconVec,
-                                                    contentDescription = null
-                                                )
-                                            }
-                                        )
-
-                                        DropdownMenuItem(
-                                            text = { Text("Izbriši") },
-                                            onClick = {
-                                                showDeleteDialog = true
-                                                showEditMenu = false
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    imageVector = Icons.Default.Delete,
-                                                    contentDescription = null
-                                                )
-                                            }
-                                        )
-                                    }
+                                    DropdownMenuItem(
+                                        text = { Text("Izbriši") },
+                                        onClick = {
+                                            showDeleteDialog = true
+                                            showEditMenu = false
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = null
+                                            )
+                                        }
+                                    )
                                 }
                             }
                         }
-                    },
-                )
-            },
-            sheetPeekHeight = if (!editMode) 96.dp else 0.dp,
-            sheetSwipeEnabled = !editMode,
-            sheetContent = {
-                if (!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null) {
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .fillMaxWidth(),
-                    ) {
-                        Text(
-                            "Povprečje",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.align(Alignment.CenterStart),
-                        )
-
-                        AvgStarsBadge(
-                            modifier = Modifier.align(Alignment.Center),
-                            stars = state.problem!!.averageStars!!,
-                        )
-
-                        GradeBadge(
-                            modifier = Modifier.align(Alignment.CenterEnd),
-                            grade = state.problem!!.averageGrade!!.roundToInt(),
-                            usePrefixText = false,
-                        )
                     }
+                },
+            )
+        },
+        sheetPeekHeight = if (!editMode && false) 96.dp else 0.dp,
+        sheetSwipeEnabled = !editMode,
+        sheetContent = {
+            if (!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .fillMaxWidth(),
+                ) {
+                    Text(
+                        "Povprečje",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.align(Alignment.CenterStart),
+                    )
 
-                    val items =  state.problem!!.grades
-                    LazyVerticalGrid(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        columns = GridCells.Adaptive(minSize = 160.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(items) { grade ->
-                            UserRatingCard(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                grade = grade,
-                            )
-                        }
+                    AvgStarsBadge(
+                        modifier = Modifier.align(Alignment.Center),
+                        stars = state.problem!!.averageStars!!,
+                    )
+
+                    GradeBadge(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        grade = state.problem!!.averageGrade!!.roundToInt(),
+                        usePrefixText = false,
+                    )
+                }
+
+                val items = state.problem!!.grades
+                LazyVerticalGrid(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    columns = GridCells.Adaptive(minSize = 160.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(items) { grade ->
+                        UserRatingCard(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            grade = grade,
+                        )
                     }
                 }
             }
+        }
+    ) { paddingValues ->
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-            ) {
+            val isWideScreen = maxWidth > 600.dp
+
+            val outerScrollModifier =
+                if (isWideScreen) Modifier else Modifier.verticalScroll(rememberScrollState())
+
+            Column(modifier = outerScrollModifier.fillMaxSize()) {
 
                 if (state.isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp)
                     )
                 } else if (state.sector != null) {
                     if (state.problem == null) {
@@ -254,95 +249,150 @@ fun ProblemDetailsScreen(
                             subtitleMessage = "Poskusi poiskati drugo ..."
                         )
                     } else {
-                        ProblemDetails(
-                            problem = state.problem!!,
-                            sector = state.sector!!,
-                            imageUrl = viewModel.getSectorImageUrl(state.sector!!.id),
-                            editable = editMode,
-                            holds = if (editMode) {
-                                state.editableHolds.values.toList()
-                            } else {
-                                state.problem!!.holdSequence.mapNotNull { ProblemHold.fromList(it) }
-                            },
-                            onHoldUpdated = viewModel::updateHold,
-                            onHoldRemoved = viewModel::removeHold,
-                            getHoldByIndex = viewModel::getHoldByIndex
-                        )
-
-                        if (editMode) {
-                            var grade by remember { mutableStateOf(state.problem?.grade ?: 0) }
-                            // Choose how hard the problem is
-                            // problem description
-                            GradeSelector(
-                                grade = grade,
-                                onGradeChanged = {
-                                    viewModel.setProblemGrade(it)
-                                    grade = it
-                                }
+                        val leftContent = @Composable {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            ProblemDetails(
+                                problem = state.problem!!,
+                                sector = state.sector!!,
+                                imageUrl = viewModel.getSectorImageUrl(state.sector!!.id),
+                                editable = editMode,
+                                holds = if (editMode) {
+                                    state.editableHolds.values.toList()
+                                } else {
+                                    state.problem!!.holdSequence.mapNotNull {
+                                        ProblemHold.fromList(
+                                            it
+                                        )
+                                    }
+                                },
+                                onHoldUpdated = viewModel::updateHold,
+                                onHoldRemoved = viewModel::removeHold,
+                                getHoldByIndex = viewModel::getHoldByIndex
                             )
+                        }
 
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            TextField(
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Opis smeri") },
-                                value = state.problem?.description ?: "",
-                                onValueChange = {
-                                    viewModel.setProblemDescription(it)
-                                }
-                            )
-                        } else {
-                            Column(
-                                horizontalAlignment = Alignment.Start,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                GradeBadge(
-                                    grade = state.problem?.grade ?: 0,
-                                    modifier = Modifier.padding(8.dp)
-                                )
-
-                                state.problem?.description?.let {
+                        val rightContent = @Composable {
+                            Column(modifier = Modifier.padding(top = 16.dp)) {
+                                if (editMode) {
+                                    var grade by remember {
+                                        mutableStateOf(
+                                            state.problem?.grade ?: 0
+                                        )
+                                    }
+                                    // Choose how hard the problem is
+                                    GradeSelector(
+                                        grade = grade,
+                                        onGradeChanged = {
+                                            viewModel.setProblemGrade(it)
+                                            grade = it
+                                        }
+                                    )
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = it,
-                                        style = MaterialTheme.typography.bodyMedium,
+                                    TextField(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        label = { Text("Opis smeri") },
+                                        value = state.problem?.description ?: "",
+                                        onValueChange = {
+                                            viewModel.setProblemDescription(it)
+                                        }
+                                    )
+                                } else {
+                                    GradeBadge(
+                                        grade = state.problem?.grade ?: 0,
                                         modifier = Modifier.padding(8.dp)
                                     )
+                                    state.problem?.description?.let {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.padding(8.dp)
+                                        )
+                                    }
                                 }
+                            }
+                        }
+
+                        if (isWideScreen) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column(
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(end = 8.dp)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    leftContent()
+                                }
+                                Column(
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(start = 8.dp)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    rightContent()
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                leftContent()
+                                rightContent()
                             }
                         }
                     }
                 }
             }
         }
+    }
 
-        if (showSectorDialog) {
-            SectorChooserDialog(
-                sectors = availableSectors!!,
-                onChoose = {
-                    it?.let {
-                        viewModel.setCreateModeSector(it)
-                        showSectorDialog = false
-                    }
-                },
-                onDismiss = goBack,
-            )
-        }
-
-        if (showDeleteDialog) {
-            ProblemDeleteDialog(
-                name = state.problem?.name ?: "",
-                onConfirm = {
-                    showDeleteDialog = false
-                    viewModel.deleteProblem(
-                        onSuccess = goBack
-                    )
-                },
+    state.error?.let { err ->
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            ErrorBottomBar(
+                error = err,
                 onDismiss = {
-                    showDeleteDialog = false
+                    viewModel.clearError()
                 },
             )
         }
+    }
+
+    if (showSectorDialog) {
+        SectorChooserDialog(
+            sectors = availableSectors!!,
+            onChoose = {
+                it?.let {
+                    viewModel.setCreateModeSector(it)
+                    showSectorDialog = false
+                }
+            },
+            onDismiss = goBack,
+        )
+    }
+
+    if (showDeleteDialog) {
+        ProblemDeleteDialog(
+            name = state.problem?.name ?: "",
+            onConfirm = {
+                showDeleteDialog = false
+                viewModel.deleteProblem(
+                    onSuccess = goBack
+                )
+            },
+            onDismiss = {
+                showDeleteDialog = false
+            },
+        )
     }
 }
 
@@ -387,7 +437,8 @@ fun ProblemDetails(
                     onHoldRemoved(holdIndex)
                     selectedHold = null
                 } else {
-                    val newHold = getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, HoldType.NORMAL)
+                    val newHold =
+                        getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, HoldType.NORMAL)
                     selectedHold = newHold
                     onHoldUpdated(holdIndex, newHold)
                 }

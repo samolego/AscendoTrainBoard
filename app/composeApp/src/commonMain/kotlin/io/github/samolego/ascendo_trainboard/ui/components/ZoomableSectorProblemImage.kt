@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -95,36 +96,51 @@ fun ZoomableSectorProblemImage(
                             totalPan += panChange
 
                             if (zoomChange != 1f || panChange != Offset.Zero) {
+
+                                // --- APPLY CHANGES TO STATE ---
                                 zoom *= zoomChange
 
                                 val newOffsetX = zoomOffsetX + panChange.x
                                 val newOffsetY = zoomOffsetY + panChange.y
 
-                                // Only apply pan constraints when zoomed in
-                                if (zoom > 1f) {
+                                // --- CONDITIONAL CONSUMPTION LOGIC ---
+
+                                // Use a small tolerance (e.g., 1.01f) for zoom checks due to floating point precision.
+                                if (zoom > 1.01f) {
+                                    // 1. If we are zoomed in, we consume the event to pan the image.
+
                                     // Calculate bounds to prevent white space
-                                    // When scaled from center, the image can move in both directions
                                     val scaledWidth = canvasSize.width * zoom
                                     val scaledHeight = canvasSize.height * zoom
-
-                                    // Maximum distance we can pan is half the difference between scaled and canvas size
                                     val maxPanX = (scaledWidth - canvasSize.width) / 2f
                                     val maxPanY = (scaledHeight - canvasSize.height) / 2f
 
-                                    // Clamp offsets to bounds (symmetric around center)
+                                    // Clamp offsets to bounds
                                     zoomOffsetX = newOffsetX.coerceIn(-maxPanX, maxPanX)
                                     zoomOffsetY = newOffsetY.coerceIn(-maxPanY, maxPanY)
+
+                                    // Consume the event to prevent the parent from scrolling
+                                    event.changes.forEach { it.consume() }
+
                                 } else {
-                                    // When zoom <= 1, reset to center/no offset
+                                    // 2. If zoom is <= 1f, we reset to center and DO NOT consume
+                                    //    scroll/pan events, allowing the parent (like a LazyColumn) to scroll.
+
                                     zoomOffsetX = 0f
                                     zoomOffsetY = 0f
                                     zoom = 1f
-                                }
 
-                                event.changes.forEach { it.consume() }
+                                    // IMPORTANT: Even if zoom is 1f, if the user initiated multi-touch,
+                                    // we should consume the event to acknowledge the intended zoom gesture.
+                                    if (wasMultiTouch) {
+                                        event.changes.forEach { it.consume() }
+                                    }
+                                }
                             }
                         }
                     } while (event.changes.any { it.pressed })
+
+                    // --- TAP/CLICK LOGIC ---
 
                     val movement = totalPan.getDistance()
 
@@ -151,6 +167,7 @@ fun ZoomableSectorProblemImage(
                     }
                 }
             }
+
     ) {
         AsyncImage(
             modifier = Modifier
@@ -167,6 +184,7 @@ fun ZoomableSectorProblemImage(
             onError = onImageLoadError,
             model = sectorImageUrl,
             contentDescription = "Image of sector ${sector.name}.",
+            contentScale = ContentScale.FillWidth,
         )
 
 
