@@ -343,10 +343,11 @@ fun ProblemDetailsScreen(
 
             if (!editMode) {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(16.dp).shadow(4.dp),
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
                     contentAlignment = Alignment.BottomEnd,
                 ) {
                     FloatingActionButton(
+                        modifier = Modifier.shadow(4.dp),
                         onClick = {
                             showGradeDialog = true
                         }
