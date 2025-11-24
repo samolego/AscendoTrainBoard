@@ -354,7 +354,7 @@ pub async fn list_problems(
 ) -> Result<Json<ProblemList>, (StatusCode, Json<ErrorResponse>)> {
     let problems = state.problems.read().await;
 
-    let filtered: Vec<&DiskProblem> = problems
+    let mut filtered: Vec<&DiskProblem> = problems
         .iter()
         .filter(|p| query.sector_id.map_or(true, |s| p.base.sector_id == s))
         .filter(|p| query.min_grade.map_or(true, |g| p.base.grade >= g))
@@ -365,6 +365,32 @@ pub async fn list_problems(
             })
         })
         .collect();
+
+    // Sort: primary = average stars (descending), secondary = updated_at (newest first)
+    filtered.sort_by(|a, b| {
+        // calculate_averages() returns (avg_grade, avg_stars)
+        let (_, a_avg_stars) = a.calculate_averages();
+        let (_, b_avg_stars) = b.calculate_averages();
+
+        let a_stars = a_avg_stars.unwrap_or(0.0);
+        let b_stars = b_avg_stars.unwrap_or(0.0);
+
+        // parse updated_at (seconds as string) to integers for stable ordering
+        let a_time = a.base.updated_at.parse::<u64>().unwrap_or(0);
+        let b_time = b.base.updated_at.parse::<u64>().unwrap_or(0);
+
+        // primary: stars descending
+        match b_stars
+            .partial_cmp(&a_stars)
+            .unwrap_or(std::cmp::Ordering::Equal)
+        {
+            std::cmp::Ordering::Equal => {
+                // secondary: time descending (newest first)
+                b_time.cmp(&a_time)
+            }
+            ord => ord,
+        }
+    });
 
     let total = filtered.len() as u32;
     let page = query.page.unwrap_or(1).max(1);
@@ -635,6 +661,7 @@ pub async fn submit_problem_grade(
     let (status, grade) = if let Some(pos) = existing_pos {
         problem.grades[pos].grade = payload.grade;
         problem.grades[pos].stars = payload.stars;
+        problem.grades[pos].attempt = payload.attempt;
         problem.grades[pos].created_at = now();
         (StatusCode::OK, problem.grades[pos].clone())
     } else {
@@ -642,6 +669,7 @@ pub async fn submit_problem_grade(
             username: username.clone(),
             grade: payload.grade,
             stars: payload.stars,
+            attempt: payload.attempt,
             created_at: now(),
         };
         problem.grades.push(grade.clone());

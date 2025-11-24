@@ -62,8 +62,18 @@ impl AppState {
         let problems_path = data_path.join("problems.json");
         let problems: Vec<DiskProblem> = if problems_path.exists() {
             match tokio::fs::read_to_string(&problems_path).await {
-                Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| Vec::new()),
-                Err(_) => Vec::new(),
+                Ok(data) => {
+                    let res = serde_json::from_str(&data).unwrap_or_else(|e| {
+                        eprintln!("Error reading problems.json: {e}");
+                        Vec::new()
+                    });
+                    println!("Successfully loaded {} problems.", res.len());
+                    res
+                }
+                Err(e) => {
+                    eprintln!("Error reading problems.json: {e}");
+                    Vec::new()
+                }
             }
         } else {
             Vec::new()

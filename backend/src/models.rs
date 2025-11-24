@@ -115,14 +115,23 @@ pub struct UpdateProblemRequest {
 pub struct Grade {
     pub username: String,
     pub grade: u8,
+    pub attempt: Attempt,
     pub stars: u8,
     pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Attempt {
+    Fail,
+    Flash,
+    Redpoint,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct SubmitGradeRequest {
     pub grade: u8,
     pub stars: u8,
+    pub attempt: Attempt,
 }
 
 // Sector

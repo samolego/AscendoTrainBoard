@@ -8,6 +8,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.CreateProblemR
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import io.github.samolego.ascendo_trainboard.api.generated.models.SubmitGradeRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
 import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
 import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
@@ -285,6 +286,22 @@ class ProblemDetailsViewModel(
             api.deleteProblem(state.value.problem!!.id)
                 .onSuccess {
                     onSuccess()
+                }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            error = err.toErrorUiState(),
+                        )
+                    }
+                }
+        }
+    }
+
+    fun postGrade(rating: SubmitGradeRequest) {
+        viewModelScope.launch {
+            api.submitGrade(state.value.problem!!.id, rating)
+                .onSuccess {
+                    loadProblem(refresh = true, problemId = state.value.problem!!.id)
                 }
                 .onFailure { err ->
                     _state.update {

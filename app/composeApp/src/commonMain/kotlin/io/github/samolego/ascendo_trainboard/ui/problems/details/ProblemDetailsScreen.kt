@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -27,6 +28,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.HoldType
@@ -59,9 +62,10 @@ import io.github.samolego.ascendo_trainboard.ui.components.AvgStarsBadge
 import io.github.samolego.ascendo_trainboard.ui.components.EmptyState
 import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.components.GradeSelector
-import io.github.samolego.ascendo_trainboard.ui.components.ProblemDeleteDialog
 import io.github.samolego.ascendo_trainboard.ui.components.UserRatingCard
 import io.github.samolego.ascendo_trainboard.ui.components.ZoomableSectorProblemImage
+import io.github.samolego.ascendo_trainboard.ui.components.dialog.ProblemDeleteDialog
+import io.github.samolego.ascendo_trainboard.ui.components.dialog.ProblemRatingDialog
 import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorBottomBar
 import kotlin.math.roundToInt
 import kotlin.time.Clock.System.now
@@ -78,6 +82,7 @@ fun ProblemDetailsScreen(
     val state by viewModel.state.collectAsState()
     val editMode = state.inEditMode && state.canEdit
     var showSectorDialog by remember { mutableStateOf(state.inCreateMode && availableSectors != null) }
+    var showGradeDialog by remember { mutableStateOf(false) }
     var showEditMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isWideScreen by remember { mutableStateOf(false) }
@@ -334,6 +339,22 @@ fun ProblemDetailsScreen(
                     }
                 }
             }
+
+
+            if (!editMode) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(16.dp).shadow(4.dp),
+                    contentAlignment = Alignment.BottomEnd,
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            showGradeDialog = true
+                        }
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = "Mark as climbed")
+                    }
+                }
+            }
         }
     }
 
@@ -349,6 +370,20 @@ fun ProblemDetailsScreen(
                 },
             )
         }
+    }
+
+    if (showGradeDialog && state.problem != null) {
+        ProblemRatingDialog(
+            defaultGrade = state.problem!!.grade,
+            defaultRating = 5,
+            onConfirm = {
+                viewModel.postGrade(it)
+                showGradeDialog = false
+            },
+            onDismiss = {
+                showGradeDialog = false
+            }
+        )
     }
 
     if (showSectorDialog) {
@@ -421,8 +456,9 @@ fun ProblemDetails(
                     onHoldRemoved(holdIndex)
                     selectedHold = null
                 } else {
+                    val type = if (holds.isEmpty()) HoldType.START else HoldType.NORMAL
                     val newHold =
-                        getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, HoldType.NORMAL)
+                        getHoldByIndex(holdIndex) ?: ProblemHold(holdIndex, type)
                     selectedHold = newHold
                     onHoldUpdated(holdIndex, newHold)
                 }
