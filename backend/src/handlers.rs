@@ -369,19 +369,16 @@ pub async fn list_problems(
     // Sort: primary = average stars (descending), secondary = updated_at (newest first)
     filtered.sort_by(|a, b| {
         // calculate_averages() returns (avg_grade, avg_stars)
-        let (_, a_avg_stars) = a.calculate_averages();
-        let (_, b_avg_stars) = b.calculate_averages();
-
-        let a_stars = a_avg_stars.unwrap_or(0.0);
-        let b_stars = b_avg_stars.unwrap_or(0.0);
+        let a_score = a.get_problem_score();
+        let b_score = b.get_problem_score();
 
         // parse updated_at (seconds as string) to integers for stable ordering
         let a_time = a.base.updated_at.parse::<u64>().unwrap_or(0);
         let b_time = b.base.updated_at.parse::<u64>().unwrap_or(0);
 
         // primary: stars descending
-        match b_stars
-            .partial_cmp(&a_stars)
+        match b_score
+            .partial_cmp(&a_score)
             .unwrap_or(std::cmp::Ordering::Equal)
         {
             std::cmp::Ordering::Equal => {
