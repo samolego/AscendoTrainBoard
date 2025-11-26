@@ -376,7 +376,7 @@ pub async fn list_problems(
         let a_time = a.base.updated_at.parse::<u64>().unwrap_or(0);
         let b_time = b.base.updated_at.parse::<u64>().unwrap_or(0);
 
-        // primary: stars descending
+        // primary: score descending
         match b_score
             .partial_cmp(&a_score)
             .unwrap_or(std::cmp::Ordering::Equal)

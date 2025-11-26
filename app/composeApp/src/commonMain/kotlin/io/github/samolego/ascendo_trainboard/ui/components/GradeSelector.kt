@@ -65,7 +65,7 @@ fun GradeRangeSelector(
                 )
             },
             valueRange = 0f..32f,
-            steps = 33,
+            steps = 31,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -109,7 +109,7 @@ fun GradeSelector(
                 onGradeChanged(sliderValue.roundToInt())
             },
             valueRange = 0f..32f,
-            steps = 33,
+            steps = 31,
             modifier = Modifier.fillMaxWidth()
         )
     }
