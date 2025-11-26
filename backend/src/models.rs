@@ -192,11 +192,14 @@ impl DiskProblem {
 
     pub fn get_problem_score(&self) -> f32 {
         let (avg_grade, avg_stars) = self.calculate_averages();
-        let grade_difference = (33.0
-            - (self.base.grade as f32 - avg_grade.unwrap_or(self.base.grade.into())).abs())
-            / 33.0;
+        let grade_difference = self.base.grade as f32 - avg_grade.unwrap_or(self.base.grade.into());
+        let has_name = if self.base.name.trim().is_empty() {
+            0.0
+        } else {
+            1.0
+        };
 
-        0.5 * grade_difference + 0.5 * (avg_stars.unwrap_or(0.0) / 5.0)
+        avg_stars.unwrap_or(3.0) * 5.0 - grade_difference.powf(2.0) + has_name
     }
 
     pub fn to_summary(self) -> APIProblemSummary {
