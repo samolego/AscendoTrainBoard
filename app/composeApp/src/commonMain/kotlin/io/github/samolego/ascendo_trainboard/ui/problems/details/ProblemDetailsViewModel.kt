@@ -298,10 +298,11 @@ class ProblemDetailsViewModel(
     }
 
     fun postGrade(rating: SubmitGradeRequest) {
+        val problemId = state.value.problem?.id ?: return
         viewModelScope.launch {
-            api.submitGrade(state.value.problem!!.id, rating)
+            api.submitGrade(problemId, rating)
                 .onSuccess {
-                    loadProblem(refresh = true, problemId = state.value.problem!!.id)
+                    loadProblem(refresh = true, problemId = problemId)
                 }
                 .onFailure { err ->
                     _state.update {
