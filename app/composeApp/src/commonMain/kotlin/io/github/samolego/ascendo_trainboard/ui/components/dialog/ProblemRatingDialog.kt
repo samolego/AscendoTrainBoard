@@ -65,7 +65,10 @@ fun ProblemRatingDialog(  // todo - landscape
                 Column {
                     Text(text = "Zvezdice", fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Row {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
                         for (i in 1..5) {
                             IconButton(onClick = { stars = i }) {
                                 if (i <= stars) {
@@ -89,7 +92,10 @@ fun ProblemRatingDialog(  // todo - landscape
                 Column {
                     Text(text = "Poskus", fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
                         Attempt.entries.forEach { a ->
                             val selected = a == attempt
                             OutlinedButton(
@@ -99,7 +105,10 @@ fun ProblemRatingDialog(  // todo - landscape
                                 ) else ButtonDefaults.outlinedButtonColors(),
                                 shape = RoundedCornerShape(12.dp),
                             ) {
-                                Text(text = a.name, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                                Text(
+                                    text = a.name,
+                                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }
