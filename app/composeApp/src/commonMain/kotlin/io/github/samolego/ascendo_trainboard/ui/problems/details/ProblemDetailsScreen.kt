@@ -43,7 +43,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -92,7 +91,7 @@ fun ProblemDetailsScreen(
         viewModel.toggleEditMode(false)
         onNavigateBack()
     }
-    val shouldShowGradesInfo by remember { derivedStateOf { !editMode && state.problem?.grades?.isNotEmpty() == true && state.problem?.averageGrade != null && state.problem?.averageStars != null } }
+    val shouldShowGradesInfo = !editMode && state.problem?.grades?.isNotEmpty() == true && state.problem?.averageGrade != null && state.problem?.averageStars != null
 
     BottomSheetScaffold(
         topBar = {
