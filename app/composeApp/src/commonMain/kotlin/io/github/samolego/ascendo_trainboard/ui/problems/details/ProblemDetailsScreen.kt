@@ -91,7 +91,7 @@ fun ProblemDetailsScreen(
         viewModel.toggleEditMode(false)
         onNavigateBack()
     }
-    val shouldShowGradesInfo by remember { derivedStateOf({!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null }) }
+    val shouldShowGradesInfo by remember { derivedStateOf { !editMode && state.problem?.grades?.isNotEmpty() == true && state.problem?.averageGrade != null && state.problem?.averageStars != null } }
 
     val gradesInfo = @Composable {
         if (!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null) {
