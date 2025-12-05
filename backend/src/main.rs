@@ -89,10 +89,6 @@ async fn main() {
         .route(API_V1_PROBLEMS_ID, delete(handlers::delete_problem))
         .route(
             &format!("{}/grades", API_V1_PROBLEMS_ID),
-            get(handlers::get_problem_grades),
-        )
-        .route(
-            &format!("{}/grades", API_V1_PROBLEMS_ID),
             post(handlers::submit_problem_grade),
         )
         .with_state(state)

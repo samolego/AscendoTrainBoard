@@ -1,4 +1,4 @@
-package io.github.samolego.ascendo_trainboard.ui.components
+package io.github.samolego.ascendo_trainboard.ui.components.dialog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

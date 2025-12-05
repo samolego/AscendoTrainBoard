@@ -2,8 +2,10 @@ package io.github.samolego.ascendo_trainboard.ui.problems.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,12 +64,14 @@ fun ProblemListScreen(
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleIndex ->
-                if (lastVisibleIndex != null &&
-                    lastVisibleIndex >= state.problems.size - 5 &&
-                    !state.isLoadingMore &&
-                    state.hasMore
-                ) {
-                    viewModel.loadMore()
+                if (lastVisibleIndex != null) {
+                    if(
+                        lastVisibleIndex >= state.problems.size - 5 &&
+                        !state.isLoadingMore &&
+                        state.hasMore
+                    ) {
+                        viewModel.loadMore()
+                    }
                 }
             }
     }
@@ -104,91 +108,129 @@ fun ProblemListScreen(
             }
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
             // Filter Bar
-            FilterBar(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                sectors = state.sectors,
-                selectedSector = state.selectedSector,
-                minGrade = state.minGrade,
-                maxGrade = state.maxGrade,
-                searchAuthor = state.searchAuthor,
-                onSectorSelected = viewModel::setSectorFilter,
-                onGradeRangeChanged = viewModel::setGradeRange,
-                onAuthorChanged = viewModel::setAuthorSearch,
-                onClearFilters = viewModel::clearFilters,
-            )
+            val leftContent = @Composable {
+                FilterBar(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    sectors = state.sectors,
+                    selectedSector = state.selectedSector,
+                    minGrade = state.minGrade,
+                    maxGrade = state.maxGrade,
+                    searchAuthor = state.searchAuthor,
+                    onSectorSelected = viewModel::setSectorFilter,
+                    onGradeRangeChanged = viewModel::setGradeRange,
+                    onAuthorChanged = viewModel::setAuthorSearch,
+                    onClearFilters = viewModel::clearFilters,
+                )
+            }
 
-            HorizontalDivider()
-
-            // Problem List
-            PullToRefreshBox(
-                modifier = Modifier.fillMaxSize(),
-                isRefreshing = state.isLoading && state.problems.isNotEmpty(),
-                onRefresh = viewModel::refresh,
-            ) {
-                LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
+            val rightContent = @Composable {
+                // Problem List
+                PullToRefreshBox(
+                    modifier = Modifier.fillMaxSize(),
+                    isRefreshing = state.isLoading && state.problems.isNotEmpty(),
+                    onRefresh = viewModel::refresh,
                 ) {
-                    if (state.isLoading && state.problems.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillParentMaxHeight(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-                    } else if (!state.isLoading && state.problems.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillParentMaxHeight(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                EmptyState(
-                                    titleMessage = "Ni najdenih smeri",
-                                    subtitleMessage = "Poskusi olajšati filtre ..."
-                                )
-                            }
-                        }
-                    } else {
-                        items(state.problems) { problem ->
-                            ProblemCard(
-                                problem = problem,
-                                sectorName = sectorId2name[problem.sectorId] ?: "Neznan sektor",
-                                onClick = { onNavigateTo(ProblemDetails(problem.id)) }
-                            )
-                        }
-
-                        // Loading more indicator
-                        if (state.isLoadingMore) {
+                    LazyColumn(
+                        state = listState,
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (state.isLoading && state.problems.isEmpty()) {
                             item {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
+                                        .fillParentMaxHeight(),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     CircularProgressIndicator()
                                 }
                             }
-                        }
+                        } else if (!state.isLoading && state.problems.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .fillParentMaxHeight(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    EmptyState(
+                                        titleMessage = "Ni najdenih smeri",
+                                        subtitleMessage = "Poskusi olajšati filtre ..."
+                                    )
+                                }
+                            }
+                        } else {
+                            items(state.problems) { problem ->
+                                ProblemCard(
+                                    problem = problem,
+                                    sectorName = sectorId2name[problem.sectorId] ?: "Neznan sektor",
+                                    onClick = { onNavigateTo(ProblemDetails(problem.id)) }
+                                )
+                            }
 
-                        item {
-                            Spacer(modifier = Modifier.height(64.dp))
+                            // Loading more indicator
+                            if (state.isLoadingMore) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            }
+
+                            item {
+                                Spacer(modifier = Modifier.height(64.dp))
+                            }
                         }
                     }
+                }
+            }
+
+
+            val isWideScreen = maxWidth > maxHeight && maxWidth > 600.dp
+
+            if (isWideScreen) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp)
+                    ) {
+                        leftContent()
+                    }
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp)
+                    ) {
+                        rightContent()
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
+                    leftContent()
+                    HorizontalDivider()
+                    rightContent()
                 }
             }
         }

@@ -8,6 +8,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.CreateProblemR
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import io.github.samolego.ascendo_trainboard.api.generated.models.SubmitGradeRequest
 import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
 import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
 import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
@@ -56,7 +57,14 @@ class ProblemDetailsViewModel(
                 sectorResult.onSuccess { sector ->
                     _state.update {
                         it.copy(
-                            problem = problem,
+                            problem = problem/*.copy(grades = MutableList(100) {
+                                Grade(
+                                    username = "tdasdadvinja",
+                                    grade = problem.grade + 1,
+                                    stars = 3,
+                                    createdAt = "2023-01-01T00:00:00Z"
+                                )
+                            }, averageGrade = 4.513222f, averageStars = 3.4934924f)*/,
                             sector = sector,
                             isLoading = false,
                             inEditMode = false,
@@ -197,6 +205,7 @@ class ProblemDetailsViewModel(
             grade = 8,
             sectorId = -1,
             holdSequence = listOf(),
+            grades = listOf(),
         )
         _state.update {
             it.copy(
@@ -277,6 +286,23 @@ class ProblemDetailsViewModel(
             api.deleteProblem(state.value.problem!!.id)
                 .onSuccess {
                     onSuccess()
+                }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            error = err.toErrorUiState(),
+                        )
+                    }
+                }
+        }
+    }
+
+    fun postGrade(rating: SubmitGradeRequest) {
+        val problemId = state.value.problem?.id ?: return
+        viewModelScope.launch {
+            api.submitGrade(problemId, rating)
+                .onSuccess {
+                    loadProblem(refresh = true, problemId = problemId)
                 }
                 .onFailure { err ->
                     _state.update {

@@ -1,6 +1,8 @@
 
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -8,6 +10,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     kotlin("plugin.serialization") version "2.2.20"
+    alias(libs.plugins.buildkonfig)
 }
 
 kotlin {
@@ -72,8 +75,9 @@ kotlin {
     }
 }
 
+val packageId = "io.github.samolego.ascendo_trainboard"
 android {
-    namespace = "io.github.samolego.ascendo_trainboard"
+    namespace = packageId
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -87,6 +91,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -104,4 +112,40 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+
+val isDebug = gradle.startParameter.taskNames.any { it.contains("debug", ignoreCase = true) || it.contains("development", ignoreCase = true) }
+
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        load(file.inputStream())
+    }
+}
+
+val debugApiUrl: String = localProps.getProperty("debugApiUrl") ?: "http://127.0.0.1"
+val prodApiUrl: String = localProps.getProperty("prodApiUrl") ?: "https://example.com"
+
+buildkonfig {
+    packageName = "$packageId.generated"
+
+    defaultConfigs {
+        buildConfigField(FieldSpec.Type.BOOLEAN, "DEBUG", "$isDebug", nullable = false, const = true)
+        buildConfigField(
+            type = FieldSpec.Type.STRING,
+            name = "DEBUG_API_URL",
+            value = debugApiUrl,
+            nullable = false,
+            const = true
+        )
+
+        buildConfigField(
+            type = FieldSpec.Type.STRING,
+            name = "PROD_API_URL",
+            value = prodApiUrl,
+            nullable = false,
+            const = true
+        )
+    }
 }

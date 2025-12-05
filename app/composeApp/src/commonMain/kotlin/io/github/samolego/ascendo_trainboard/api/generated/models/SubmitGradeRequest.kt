@@ -15,6 +15,7 @@
 
 package io.github.samolego.ascendo_trainboard.api.generated.models
 
+import io.github.samolego.ascendo_trainboard.api.generated.models.Attempt
 
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.*
@@ -25,6 +26,7 @@ import kotlinx.serialization.encoding.*
  *
  * @param grade Suggested grade (integer, converted to Fontainebleau on client)
  * @param stars Rating (1-5 stars)
+ * @param attempt 
  */
 @Serializable
 
@@ -34,7 +36,9 @@ data class SubmitGradeRequest (
     @SerialName(value = "grade") @Required val grade: kotlin.Int,
 
     /* Rating (1-5 stars) */
-    @SerialName(value = "stars") @Required val stars: kotlin.Int
+    @SerialName(value = "stars") @Required val stars: kotlin.Int,
+
+    @SerialName(value = "attempt") @Required val attempt: Attempt
 
 ) {
 

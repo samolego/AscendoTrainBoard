@@ -65,7 +65,7 @@ fun GradeRangeSelector(
                 )
             },
             valueRange = 0f..32f,
-            steps = 33,
+            steps = 31,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -109,7 +109,7 @@ fun GradeSelector(
                 onGradeChanged(sliderValue.roundToInt())
             },
             valueRange = 0f..32f,
-            steps = 33,
+            steps = 31,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -119,18 +119,19 @@ fun GradeSelector(
 fun GradeBadge(
     modifier: Modifier = Modifier,
     grade: Int,
+    usePrefixText: Boolean = true,
     secondGrade: Int? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val text = if (secondGrade == null || secondGrade == grade) {
-        "Ocena = ${getFrenchGrade(grade)}"
-    } else {
-        "${getFrenchGrade(grade)} ≤ ocena ≤ ${getFrenchGrade(secondGrade)}"
+    val text = when {
+        !usePrefixText -> getFrenchGrade(grade)
+        secondGrade == null || secondGrade == grade -> "Ocena = ${getFrenchGrade(grade)}"
+        else -> "${getFrenchGrade(grade)} ≤ ocena ≤ ${getFrenchGrade(secondGrade)}"
     }
 
     Badge(
         modifier = modifier
-            .clip(RoundedCornerShape(64f))
+            .clip(RoundedCornerShape(64.dp))
             .then(
                 if (onClick != null) {
                     Modifier.clickable { onClick() }

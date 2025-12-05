@@ -32,7 +32,7 @@ fun AppNavigation(
     problemDetailsViewModel: ProblemDetailsViewModel,
     authViewModel: AuthenticationViewModel,
 ) {
-    val baseUrl = getPlatform().baseUrl(false)
+    val baseUrl = getPlatform().baseUrl()
 
     NavHost(
         navController = navController,

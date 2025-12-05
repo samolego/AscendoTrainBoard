@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-const val MIN_GRADE = 1
+const val MIN_GRADE = 0
 const val MAX_GRADE = 16
 
 

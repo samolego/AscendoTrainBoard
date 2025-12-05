@@ -18,7 +18,7 @@ fun App(
 ) {
     TrainBoardAppTheme {
         val platform = getPlatform()
-        val api = remember { AscendoApi(baseUrl = "${platform.baseUrl(false)}/api/v1") }
+        val api = remember { AscendoApi(baseUrl = "${platform.baseUrl()}/api/v1") }
         val problemListViewModel = remember { ProblemListViewModel(api) }
         val problemDetailsViewModel = remember { ProblemDetailsViewModel(api) }
         val authViewModel = remember { AuthenticationViewModel(api) }

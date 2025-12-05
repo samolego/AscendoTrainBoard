@@ -15,6 +15,7 @@
 
 package io.github.samolego.ascendo_trainboard.api.generated.models
 
+import io.github.samolego.ascendo_trainboard.api.generated.models.Grade
 
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.*
@@ -29,6 +30,7 @@ import kotlinx.serialization.encoding.*
  * @param grade Numeric grade (converted to Fontainebleau on client)
  * @param sectorId Sector ID
  * @param holdSequence Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)
+ * @param grades Array of user-submitted grades and ratings for this problem
  * @param description 
  * @param averageGrade Average of all user-submitted grades (null if no grades)
  * @param averageStars Average of all user ratings (null if no grades)
@@ -53,6 +55,9 @@ data class Problem (
 
     /* Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End) */
     @SerialName(value = "hold_sequence") @Required val holdSequence: kotlin.collections.List<kotlin.collections.List<kotlin.Int>>,
+
+    /* Array of user-submitted grades and ratings for this problem */
+    @SerialName(value = "grades") @Required val grades: kotlin.collections.List<Grade>,
 
     @SerialName(value = "description") val description: kotlin.String? = null,
 

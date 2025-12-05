@@ -75,10 +75,10 @@ class AscendoApi(
                 // Try to parse as Error response
                 val error = try {
                     response.body<Error>()
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                     // Fallback if error parsing fails
                     Error(
-                        error = "HTTP ${response.status.value}: ${response.status.description}",
+                        error = "HTTP ${response.status.value}: ${response.status.description} (${e.message})",
                         code = "HTTP_ERROR"
                     )
                 }
