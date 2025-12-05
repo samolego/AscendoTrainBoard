@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.HoldType
 import io.github.samolego.ascendo_trainboard.api.ProblemHold
+import io.github.samolego.ascendo_trainboard.api.generated.models.Grade
 import io.github.samolego.ascendo_trainboard.api.generated.models.Problem
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
@@ -92,12 +93,6 @@ fun ProblemDetailsScreen(
         onNavigateBack()
     }
     val shouldShowGradesInfo by remember { derivedStateOf { !editMode && state.problem?.grades?.isNotEmpty() == true && state.problem?.averageGrade != null && state.problem?.averageStars != null } }
-
-    val gradesInfo = @Composable {
-        if (!editMode && state.problem?.grades?.isNotEmpty() ?: false && state.problem?.averageGrade != null && state.problem?.averageStars != null) {
-            GradesInfo(problem = state.problem!!)
-        }
-    }
 
     BottomSheetScaffold(
         topBar = {
@@ -200,7 +195,11 @@ fun ProblemDetailsScreen(
         sheetSwipeEnabled = shouldShowGradesInfo && !isWideScreen,
         sheetContent = {
             if (shouldShowGradesInfo && !isWideScreen) {
-                GradesInfo(problem = state.problem!!)
+                GradesInfo(
+                    grades = state.problem?.grades ?: emptyList(),
+                    averageStars = state.problem?.averageStars ?: 0f,
+                    averageGrade = state.problem?.averageGrade ?: 0f,
+                )
             }
         },
     ) { paddingValues ->
@@ -292,7 +291,11 @@ fun ProblemDetailsScreen(
                                     }
 
                                     if (isWideScreen) {
-                                        GradesInfo(problem = state.problem!!) {
+                                        GradesInfo(
+                                            grades = state.problem?.grades ?: emptyList(),
+                                            averageStars = state.problem?.averageStars ?: 0f,
+                                            averageGrade = state.problem?.averageGrade ?: 0f,
+                                        ) {
                                             content()
                                         }
                                     } else {
@@ -527,11 +530,12 @@ fun ProblemDetails(
 
 @Composable
 fun GradesInfo(
-    problem: Problem,
+    grades: List<Grade>,
+    averageStars: Float,
+    averageGrade: Float,
     preContent: @Composable () -> Unit = {}
 ) {
 
-    val items = problem.grades
     LazyVerticalGrid(
         modifier = Modifier.padding(horizontal = 16.dp),
         columns = GridCells.Adaptive(minSize = 160.dp),
@@ -542,7 +546,7 @@ fun GradesInfo(
             preContent()
         }
 
-        if (items.isNotEmpty()) {
+        if (grades.isNotEmpty()) {
             stickyHeader {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -562,19 +566,19 @@ fun GradesInfo(
 
                         AvgStarsBadge(
                             modifier = Modifier.align(Alignment.Center),
-                            stars = problem.averageStars!!,
+                            stars = averageStars,
                         )
 
                         GradeBadge(
                             modifier = Modifier.align(Alignment.CenterEnd),
-                            grade = problem.averageGrade!!.roundToInt(),
+                            grade = averageGrade.roundToInt(),
                             usePrefixText = false,
                         )
                     }
 
                 }
             }
-            items(items) { grade ->
+            items(grades) { grade ->
                 UserRatingCard(
                     modifier = Modifier
                         .fillMaxWidth(),
