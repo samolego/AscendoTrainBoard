@@ -13,6 +13,10 @@ class WasmPlatform : Platform {
         } else {
             "${window.location.protocol}//${window.location.host}"
         }
+
+    override fun log(msg: String) {
+        //console.log(msg)
+    }
 }
 
 actual fun getPlatform(): Platform = WasmPlatform()

@@ -9,10 +9,14 @@ class AndroidPlatform(context: Context) : Platform {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
     override val storage: PlatformStorage = AndroidStorage(context)
 
+    override fun log(msg: String) {
+        Logger.getLogger("AscendoTrainboard").info(msg)
+    }
+
     override fun baseUrl(): String {
         Logger.getLogger("AndroidPlatform").info("baseUrl() called: ${BuildConfig.DEBUG} vs ${BuildKonfig.DEBUG}")
         return if (BuildConfig.DEBUG) {
-            "http://192.168.0.139:3000"
+            "http://192.168.0.140:3000"
         } else {
             "http://192.168.1.1"
         }

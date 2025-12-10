@@ -7,6 +7,8 @@ interface Platform {
     val storage: PlatformStorage
 
     fun baseUrl(): String
+
+    fun log(msg: String)
 }
 
 expect fun getPlatform(): Platform

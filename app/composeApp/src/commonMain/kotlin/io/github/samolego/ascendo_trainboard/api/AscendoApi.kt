@@ -38,7 +38,7 @@ import kotlinx.serialization.json.Json
  * Uses generated models from OpenAPI spec.
  */
 class AscendoApi(
-    private val baseUrl: String = "http://192.168.1.1/api/v1"
+    private val baseUrl: String
 ) {
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -69,6 +69,9 @@ class AscendoApi(
     ): Result<T> {
         return try {
             val response = block()
+            getPlatform().log("API CALL:")
+            getPlatform().log(response.toString())
+            getPlatform().log(response.status.toString())
             if (response.status.isSuccess()) {
                 Result.success(response.body<T>())
             } else {

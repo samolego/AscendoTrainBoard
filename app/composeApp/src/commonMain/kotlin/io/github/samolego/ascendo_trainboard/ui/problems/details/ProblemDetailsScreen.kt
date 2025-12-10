@@ -249,7 +249,7 @@ fun ProblemDetailsScreen(
                         val rightContent = @Composable {
                             Column(modifier = Modifier.padding(top = 16.dp)) {
                                 if (editMode) {
-                                    var grade by remember {
+                                    var grade by remember(state.problem?.grade) {
                                         mutableStateOf(
                                             state.problem?.grade ?: 0
                                         )
