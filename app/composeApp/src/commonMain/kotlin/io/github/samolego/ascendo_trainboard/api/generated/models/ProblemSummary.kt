@@ -29,6 +29,7 @@ import kotlinx.serialization.encoding.*
  * @param grade Numeric grade (converted to Fontainebleau on client)
  * @param sectorId Sector ID
  * @param description 
+ * @param isCompetition 
  * @param averageGrade Average of all user-submitted grades (null if no grades)
  * @param averageStars Average of all user ratings (null if no grades)
  * @param updatedAt 
@@ -51,6 +52,8 @@ data class ProblemSummary (
     @SerialName(value = "sector_id") @Required val sectorId: kotlin.Int,
 
     @SerialName(value = "description") val description: kotlin.String? = null,
+
+    @SerialName(value = "is_competition") val isCompetition: kotlin.Boolean? = null,
 
     /* Average of all user-submitted grades (null if no grades) */
     @SerialName(value = "average_grade") val averageGrade: kotlin.Float? = null,

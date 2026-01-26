@@ -255,31 +255,12 @@ paths:
       summary: Retrieve a list of climbing problems with optional filtering and pagination
       operationId: listProblems
       parameters:
-        - name: sector_id
-          in: query
-          required: false
-          schema:
-            type: integer
-            format: int32
-          description: Filter by sector ID
-        - name: min_grade
-          in: query
-          required: false
-          schema:
-            type: integer
-          description: Filter by minimum grade
-        - name: max_grade
-          in: query
-          required: false
-          schema:
-            type: integer
-          description: Filter by maximum grade
-        - name: name
+        - name: tags
           in: query
           required: false
           schema:
             type: string
-          description: Filter by problem name
+          description: JSON-encoded array of tags (e.g. [{"Avtor":"Sam"}])
         - name: page
           in: query
           required: false
@@ -895,6 +876,8 @@ components:
           format: int32
           example: 1
           description: Sector ID
+        is_competition:
+          type: boolean
         average_grade:
           type: number
           format: float
@@ -989,6 +972,8 @@ components:
           format: int32
           example: 1
           description: Sector ID (must match an existing sector)
+        is_competition:
+          type: boolean
         hold_sequence:
           type: array
           description: "Array of [index, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)"
@@ -1015,6 +1000,8 @@ components:
           type: integer
           format: int32
           example: 7
+        is_competition:
+          type: boolean
         hold_sequence:
           type: array
           description: "Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)"
@@ -1088,3 +1075,24 @@ components:
           description: Rating (1-5 stars)
         attempt:
           $ref: "#/components/schemas/Attempt"
+    Tag:
+      type: object
+      description: Filtering tag. Only one property should be set per object.
+      properties:
+        Tekmovalni:
+          type: boolean
+        Avtor:
+          type: string
+        SpremenjeniZaDatumom:
+          type: integer
+          format: int64
+        Splezani:
+          $ref: "#/components/schemas/Attempt"
+        Ime:
+          type: string
+        MinGrade:
+          type: integer
+        MaxGrade:
+          type: integer
+        SectorId:
+          type: integer

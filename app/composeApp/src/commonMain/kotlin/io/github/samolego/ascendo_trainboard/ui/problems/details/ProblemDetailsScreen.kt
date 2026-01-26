@@ -91,7 +91,8 @@ fun ProblemDetailsScreen(
         viewModel.toggleEditMode(false)
         onNavigateBack()
     }
-    val shouldShowGradesInfo = !editMode && state.problem?.grades?.isNotEmpty() == true && state.problem?.averageGrade != null && state.problem?.averageStars != null
+    val shouldShowGradesInfo =
+        !editMode && state.problem?.grades?.isNotEmpty() == true && state.problem?.averageGrade != null && state.problem?.averageStars != null
 
     BottomSheetScaffold(
         topBar = {
@@ -255,13 +256,29 @@ fun ProblemDetailsScreen(
                                         )
                                     }
                                     // Choose how hard the problem is
-                                    GradeSelector(
-                                        grade = grade,
-                                        onGradeChanged = {
-                                            viewModel.setProblemGrade(it)
-                                            grade = it
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            GradeSelector(
+                                                grade = grade,
+                                                onGradeChanged = {
+                                                    viewModel.setProblemGrade(it)
+                                                    grade = it
+                                                }
+                                            )
                                         }
-                                    )
+
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text("Tekmovalni", style = MaterialTheme.typography.labelSmall)
+                                            androidx.compose.material3.Switch(
+                                                checked = state.problem?.isCompetition == true,
+                                                onCheckedChange = { viewModel.setProblemIsCompetition(it) }
+                                            )
+                                        }
+                                    }
                                     Spacer(modifier = Modifier.height(8.dp))
                                     TextField(
                                         modifier = Modifier.fillMaxWidth(),

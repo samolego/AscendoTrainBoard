@@ -65,7 +65,7 @@ fun ProblemListScreen(
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleIndex ->
                 if (lastVisibleIndex != null) {
-                    if(
+                    if (
                         lastVisibleIndex >= state.problems.size - 5 &&
                         !state.isLoadingMore &&
                         state.hasMore
@@ -118,13 +118,12 @@ fun ProblemListScreen(
                 FilterBar(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     sectors = state.sectors,
-                    selectedSector = state.selectedSector,
-                    minGrade = state.minGrade,
-                    maxGrade = state.maxGrade,
-                    searchAuthor = state.searchAuthor,
-                    onSectorSelected = viewModel::setSectorFilter,
+                    tags = state.tags,
+                    minGrade = state.tags.firstNotNullOfOrNull { it.minGrade } ?: MIN_GRADE,
+                    maxGrade = state.tags.firstNotNullOfOrNull { it.maxGrade } ?: MAX_GRADE,
+                    onAddTag = viewModel::addTag,
+                    onRemoveTag = viewModel::removeTag,
                     onGradeRangeChanged = viewModel::setGradeRange,
-                    onAuthorChanged = viewModel::setAuthorSearch,
                     onClearFilters = viewModel::clearFilters,
                 )
             }

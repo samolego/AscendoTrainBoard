@@ -10,6 +10,7 @@
 | **grade** | **kotlin.Int** | Numeric grade (converted to Fontainebleau on client) |  |
 | **sectorId** | **kotlin.Int** | Sector ID |  |
 | **description** | **kotlin.String** |  |  [optional] |
+| **isCompetition** | **kotlin.Boolean** |  |  [optional] |
 | **averageGrade** | **kotlin.Float** | Average of all user-submitted grades (null if no grades) |  [optional] |
 | **averageStars** | **kotlin.Float** | Average of all user ratings (null if no grades) |  [optional] |
 | **updatedAt** | **kotlin.String** |  |  [optional] |

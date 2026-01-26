@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,17 +51,19 @@ fun ZoomableSectorProblemImage(
     var zoomOffsetX by remember { mutableStateOf(0f) }
     var zoomOffsetY by remember { mutableStateOf(0f) }
 
+    val currentOnHoldClicked by rememberUpdatedState(onHoldClicked)
 
     val holdRects = remember(sector.holds) {
         sector.holds
             .mapIndexed { ix, rect ->
-                    HoldRect(Rect(
+                HoldRect(
+                    Rect(
                         left = rect[0].toFloat(),
                         top = rect[1].toFloat(),
                         right = rect[2].toFloat(),
                         bottom = rect[3].toFloat()
                     ),
-                   ix
+                    ix
                 )
             }
             // We sort them so that the smallest ones are checked for click first
@@ -161,7 +164,7 @@ fun ZoomableSectorProblemImage(
                             val clickedHold = holdRects.firstOrNull { it.rect.contains(adjustedTapPosition) }
 
                             if (clickedHold != null) {
-                                onHoldClicked(clickedHold.originalIndex)
+                                currentOnHoldClicked(clickedHold.originalIndex)
                             }
                         }
                     }
@@ -240,8 +243,8 @@ fun ZoomableSectorProblemImage(
 
             if (interactive) {
                 holdRects.forEach { rect ->
-                        markHold(rect, Color.LightGray.copy(alpha = 0.5f), false)
-                    }
+                    markHold(rect, Color.LightGray.copy(alpha = 0.5f), false)
+                }
             }
 
             holds.forEach { hold ->

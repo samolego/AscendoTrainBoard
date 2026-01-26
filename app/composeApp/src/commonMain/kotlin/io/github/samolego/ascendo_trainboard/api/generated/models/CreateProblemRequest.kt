@@ -28,6 +28,7 @@ import kotlinx.serialization.encoding.*
  * @param holdSequence Array of [index, type] where row/col are indices into the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)
  * @param name Problem name (defaults to \"Problem {id}\" if not provided)
  * @param description 
+ * @param isCompetition 
  */
 @Serializable
 
@@ -45,7 +46,9 @@ data class CreateProblemRequest (
     /* Problem name (defaults to \"Problem {id}\" if not provided) */
     @SerialName(value = "name") val name: kotlin.String? = null,
 
-    @SerialName(value = "description") val description: kotlin.String? = null
+    @SerialName(value = "description") val description: kotlin.String? = null,
+
+    @SerialName(value = "is_competition") val isCompetition: kotlin.Boolean? = null
 
 ) {
 

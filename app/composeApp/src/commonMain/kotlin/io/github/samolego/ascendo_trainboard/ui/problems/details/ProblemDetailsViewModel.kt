@@ -57,14 +57,15 @@ class ProblemDetailsViewModel(
                 sectorResult.onSuccess { sector ->
                     _state.update {
                         it.copy(
-                            problem = problem/*.copy(grades = MutableList(100) {
-                                Grade(
-                                    username = "tdasdadvinja",
-                                    grade = problem.grade + 1,
-                                    stars = 3,
-                                    createdAt = "2023-01-01T00:00:00Z"
-                                )
-                            }, averageGrade = 4.513222f, averageStars = 3.4934924f)*/,
+                            problem = problem,
+                            /*.copy(grades = MutableList(100) {
+                                                            Grade(
+                                                                username = "tdasdadvinja",
+                                                                grade = problem.grade + 1,
+                                                                stars = 3,
+                                                                createdAt = "2023-01-01T00:00:00Z"
+                                                            )
+                                                        }, averageGrade = 4.513222f, averageStars = 3.4934924f)*/
                             sector = sector,
                             isLoading = false,
                             inEditMode = false,
@@ -155,6 +156,7 @@ class ProblemDetailsViewModel(
                 description = problem.description,
                 grade = problem.grade,
                 holdSequence = updatedHoldSequence,
+                isCompetition = problem.isCompetition,
             )
 
             val status = if (state.value.inCreateMode) {
@@ -164,6 +166,7 @@ class ProblemDetailsViewModel(
                     grade = updatedProblem.grade,
                     holdSequence = updatedProblem.holdSequence,
                     sectorId = updatedProblem.sectorId,
+                    isCompetition = updatedProblem.isCompetition,
                 )
 
                 api.createProblem(request)
@@ -173,6 +176,7 @@ class ProblemDetailsViewModel(
                     description = updatedProblem.description,
                     grade = updatedProblem.grade,
                     holdSequence = updatedProblem.holdSequence,
+                    isCompetition = updatedProblem.isCompetition,
                 )
 
                 api.updateProblem(updatedProblem.id, request)
@@ -183,13 +187,13 @@ class ProblemDetailsViewModel(
                     it.copy(problem = updatedProblem)
                 }
             }
-            .onFailure { error ->
-                _state.update {
-                    it.copy(
-                        error = error.toErrorUiState(),
-                    )
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            error = error.toErrorUiState(),
+                        )
+                    }
                 }
-            }
         }
     }
 
@@ -206,6 +210,7 @@ class ProblemDetailsViewModel(
             sectorId = -1,
             holdSequence = listOf(),
             grades = listOf(),
+            isCompetition = false,
         )
         _state.update {
             it.copy(
@@ -236,7 +241,7 @@ class ProblemDetailsViewModel(
                             )
                         }
                     }
-                    .onFailure {error ->
+                    .onFailure { error ->
                         _state.update {
                             it.copy(
                                 error = error.toErrorUiState(),
@@ -248,12 +253,21 @@ class ProblemDetailsViewModel(
     }
 
     fun setProblemGrade(grade: Int) {
-        if ( state.value.problem == null || grade == state.value.problem?.grade) {
+        if (state.value.problem == null || grade == state.value.problem?.grade) {
             return
         }
 
         _state.update {
             it.copy(problem = it.problem!!.copy(grade = grade))
+        }
+    }
+
+    fun setProblemIsCompetition(isCompetition: Boolean) {
+        if (state.value.problem == null) {
+            return
+        }
+        _state.update {
+            it.copy(problem = it.problem!!.copy(isCompetition = isCompetition))
         }
     }
 

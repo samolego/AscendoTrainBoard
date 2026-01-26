@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import io.github.samolego.ascendo_trainboard.api.AscendoApi
 import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import io.github.samolego.ascendo_trainboard.api.generated.models.Tag
 import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
 import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -32,10 +35,7 @@ data class ProblemListState(
     val error: ErrorUiState? = null,
     val currentPage: Int = 1,
     val hasMore: Boolean = true,
-    val selectedSector: SectorSummary? = null,
-    val minGrade: Int = MIN_GRADE,
-    val maxGrade: Int = MAX_GRADE,
-    val searchAuthor: String = ""
+    val tags: List<Tag> = emptyList(),
 )
 
 @OptIn(FlowPreview::class)
@@ -49,15 +49,6 @@ class ProblemListViewModel(
     init {
         loadSectors()
         loadProblems()
-
-        _state
-            .map { it.searchAuthor }
-            .distinctUntilChanged()
-            .debounce(500L)
-            .onEach {
-                loadProblems(refresh = true)
-            }
-            .launchIn(viewModelScope)
     }
 
     private fun loadSectors() {
@@ -94,10 +85,7 @@ class ProblemListViewModel(
             }
 
             val result = api.getProblems(
-                sector = _state.value.selectedSector?.id,
-                minGrade = _state.value.minGrade,
-                maxGrade = _state.value.maxGrade,
-                name = _state.value.searchAuthor.ifBlank { null },
+                tags = _state.value.tags,
                 page = 1,
                 perPage = 20
             )
@@ -131,10 +119,7 @@ class ProblemListViewModel(
 
             val nextPage = _state.value.currentPage + 1
             val result = api.getProblems(
-                sector = _state.value.selectedSector?.id,
-                minGrade = _state.value.minGrade,
-                maxGrade = _state.value.maxGrade,
-                name = _state.value.searchAuthor.ifBlank { null },
+                tags = _state.value.tags,
                 page = nextPage,
                 perPage = 20
             )
@@ -159,29 +144,47 @@ class ProblemListViewModel(
         }
     }
 
-    fun setSectorFilter(sector: SectorSummary?) {
-        _state.update { it.copy(selectedSector = sector) }
+    fun addTag(tag: Tag) {
+        _state.update { state ->
+            val newTags = state.tags.toMutableList()
+
+            // Remove existing tag of the same type to override it
+            // Use serialization to find the active key (e.g. "Avtor", "SectorId")
+            // Default Json configuration omits nulls, so only the set property will be present.
+            val activeKey = getTagKey(tag)
+            if (activeKey != null) {
+                newTags.removeAll { getTagKey(it) == activeKey }
+            }
+
+            newTags.add(tag)
+            state.copy(tags = newTags)
+        }
+        loadProblems(refresh = true)
+    }
+
+    fun removeTag(tag: Tag) {
+        _state.update {
+            it.copy(tags = it.tags - tag)
+        }
         loadProblems(refresh = true)
     }
 
     fun setGradeRange(minGrade: Int, maxGrade: Int) {
-        _state.update { it.copy(minGrade = minGrade, maxGrade = maxGrade) }
+        _state.update { state ->
+            val newTags = state.tags.filter { it.minGrade == null && it.maxGrade == null }.toMutableList()
+            if (minGrade > MIN_GRADE) {
+                newTags.add(Tag(minGrade = minGrade))
+            }
+            if (maxGrade < MAX_GRADE) {
+                newTags.add(Tag(maxGrade = maxGrade))
+            }
+            state.copy(tags = newTags)
+        }
         loadProblems(refresh = true)
     }
 
-    fun setAuthorSearch(author: String) {
-        _state.update { it.copy(searchAuthor = author) }
-    }
-
     fun clearFilters() {
-        _state.update {
-            it.copy(
-                selectedSector = null,
-                minGrade = MIN_GRADE,
-                maxGrade = MAX_GRADE,
-                searchAuthor = ""
-            )
-        }
+        _state.update { it.copy(tags = emptyList()) }
         loadProblems(refresh = true)
     }
 
@@ -194,5 +197,15 @@ class ProblemListViewModel(
 
     fun clearError() {
         _state.update { it.copy(error = null) }
+    }
+}
+
+private fun getTagKey(tag: Tag): String? {
+    // Encode to JSON tree; default configuration skips nulls.
+    // The resulting object should have exactly one key.
+    return try {
+        Json.encodeToJsonElement(Tag.serializer(), tag).jsonObject.keys.firstOrNull()
+    } catch (e: Exception) {
+        null
     }
 }

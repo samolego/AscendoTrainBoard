@@ -18,13 +18,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,28 +39,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
+import io.github.samolego.ascendo_trainboard.api.generated.models.Tag
 import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.components.GradeRangeSelector
-import io.github.samolego.ascendo_trainboard.ui.components.SectorChooserDropdown
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterBar(
     sectors: List<SectorSummary>,
-    selectedSector: SectorSummary?,
+    tags: List<Tag>,
     minGrade: Int,
     maxGrade: Int,
-    searchAuthor: String,
-    onSectorSelected: (SectorSummary?) -> Unit,
+    onAddTag: (Tag) -> Unit,
+    onRemoveTag: (Tag) -> Unit,
     onGradeRangeChanged: (Int, Int) -> Unit,
-    onAuthorChanged: (String) -> Unit,
     onClearFilters: () -> Unit,
     modifier: Modifier = Modifier,
     isCollapsed: Boolean = false,
     onExpand: () -> Unit = {},
 ) {
-    var showAuthorSearch by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     // Use AnimatedContent to switch between the collapsed and expanded content
     AnimatedContent(
@@ -67,14 +67,26 @@ fun FilterBar(
         modifier = modifier,
         transitionSpec = {
             val contentTransform = if (targetState) { // Collapsing (Expanded -> Collapsed)
-                val exitTransition = slideOutVertically(targetOffsetY = { -it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(200))
-                val enterTransition = slideInVertically(initialOffsetY = { -it }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(200))
+                val exitTransition = slideOutVertically(
+                    targetOffsetY = { -it },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(200))
+                val enterTransition = slideInVertically(
+                    initialOffsetY = { -it },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(200))
 
                 enterTransition togetherWith exitTransition
 
             } else {
-                val exitTransition = slideOutVertically(targetOffsetY = { -it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(200))
-                val enterTransition = slideInVertically(initialOffsetY = { -it }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(200))
+                val exitTransition = slideOutVertically(
+                    targetOffsetY = { -it },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(200))
+                val enterTransition = slideInVertically(
+                    initialOffsetY = { -it },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(200))
                 enterTransition togetherWith exitTransition
             }
 
@@ -104,12 +116,12 @@ fun FilterBar(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = selectedSector?.name ?: "Vsi sektorji",
+                        text = if (tags.isNotEmpty()) "${tags.size} filtrov" else "Vsi balvani",
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Sektorji")
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Filtri")
                 }
 
                 GradeBadge(
@@ -128,20 +140,36 @@ fun FilterBar(
 
         } else {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Sector Filter Dropdown
+                // Tag Search Input
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(top = 16.dp)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    SectorChooserDropdown(
-                        modifier = Modifier.weight(1f),
-                        showAllOption = true,
-                        onSectorSelected = onSectorSelected,
+                    TagSearchBar(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        onAddTag = onAddTag,
                         sectors = sectors,
-                        selectedSector = selectedSector,
+                        modifier = Modifier.weight(1f)
                     )
+                }
+
+                // Active Tags Chips
+                if (tags.isNotEmpty()) {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(tags.filter { it.minGrade == null && it.maxGrade == null }) { tag ->
+                            TagChip(
+                                tag = tag,
+                                sectorNameResolver = { id -> sectors.find { it.id == id }?.name },
+                                onRemove = { onRemoveTag(tag) }
+                            )
+                        }
+                    }
                 }
 
                 GradeRangeSelector(
@@ -150,43 +178,19 @@ fun FilterBar(
                     onGradeRangeChanged = onGradeRangeChanged,
                 )
 
-                // Author Search & Clear
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (showAuthorSearch) {
-                        OutlinedTextField(
-                            value = searchAuthor,
-                            onValueChange = onAuthorChanged,
-                            placeholder = { Text("Ime smeri") },
-                            trailingIcon = {
-                                Icon(Icons.Default.Search, contentDescription = "Išči")
-                            },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        TextButton(
-                            onClick = { showAuthorSearch = true }
-                        ) {
-                            Icon(Icons.Default.Search, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Išči po imenu")
-                        }
-                    }
-
-                    if (selectedSector != null || searchAuthor.isNotBlank()) {
+                // Clear Filters Button
+                if (tags.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         TextButton(onClick = {
                             onClearFilters()
-                            showAuthorSearch = false
+                            searchQuery = ""
                         }) {
                             Icon(Icons.Default.Clear, contentDescription = null)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Počisti")
+                            Text("Počisti vse")
                         }
                     }
                 }
@@ -201,13 +205,12 @@ fun FilterBar(
 private fun PreviewExtendedFilterBar() {
     FilterBar(
         sectors = listOf(),
-        selectedSector = null,
+        tags = emptyList(),
         minGrade = 1,
         maxGrade = 16,
-        searchAuthor = "asd",
-        onSectorSelected = {},
+        onAddTag = {},
+        onRemoveTag = {},
         onGradeRangeChanged = { _, _ -> },
-        onAuthorChanged = {},
         onClearFilters = {},
         isCollapsed = false,
         onExpand = {},
@@ -219,13 +222,12 @@ private fun PreviewExtendedFilterBar() {
 private fun PreviewCollapsedFilterBar() {
     FilterBar(
         sectors = listOf(),
-        selectedSector = null,
+        tags = emptyList(),
         minGrade = 1,
         maxGrade = 16,
-        searchAuthor = "asd",
-        onSectorSelected = {},
+        onAddTag = {},
+        onRemoveTag = {},
         onGradeRangeChanged = { _, _ -> },
-        onAuthorChanged = {},
         onClearFilters = {},
         isCollapsed = true,
         onExpand = {},

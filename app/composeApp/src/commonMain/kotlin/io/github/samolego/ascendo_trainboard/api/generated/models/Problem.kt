@@ -32,6 +32,7 @@ import kotlinx.serialization.encoding.*
  * @param holdSequence Array of [index, type] where index is the hold index of the sector's holds array (0-indexed) and type is hold type (0=Start, 1=Foot, 2=Normal, 3=End)
  * @param grades Array of user-submitted grades and ratings for this problem
  * @param description 
+ * @param isCompetition 
  * @param averageGrade Average of all user-submitted grades (null if no grades)
  * @param averageStars Average of all user ratings (null if no grades)
  * @param updatedAt 
@@ -60,6 +61,8 @@ data class Problem (
     @SerialName(value = "grades") @Required val grades: kotlin.collections.List<Grade>,
 
     @SerialName(value = "description") val description: kotlin.String? = null,
+
+    @SerialName(value = "is_competition") val isCompetition: kotlin.Boolean? = null,
 
     /* Average of all user-submitted grades (null if no grades) */
     @SerialName(value = "average_grade") val averageGrade: kotlin.Float? = null,

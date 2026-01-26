@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // Settings (read-only, loaded on startup)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,6 +60,8 @@ pub struct BaseProblem {
     pub grade: u8,
     pub sector_id: u16,
     pub updated_at: String,
+    #[serde(default)]
+    pub is_competition: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,6 +103,7 @@ pub struct CreateProblemRequest {
     pub grade: u8,
     pub sector_id: u16,
     pub hold_sequence: Vec<Hold>,
+    pub is_competition: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -108,6 +112,7 @@ pub struct UpdateProblemRequest {
     pub description: Option<String>,
     pub grade: Option<u8>,
     pub hold_sequence: Option<Vec<Hold>>,
+    pub is_competition: Option<bool>,
 }
 
 // Grade
@@ -120,7 +125,7 @@ pub struct Grade {
     pub created_at: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Attempt {
     Fail,
     Flash,
@@ -132,6 +137,18 @@ pub struct SubmitGradeRequest {
     pub grade: u8,
     pub stars: u8,
     pub attempt: Attempt,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Tag {
+    Tekmovalni(bool),             // je tekmovalni za ta mesec ali ne
+    Avtor(String),                // Avtor bolderja
+    SpremenjeniZaDatumom(String), // Bolderji, spremenjeni za datumom
+    Splezani(Attempt),            // Bolderji z mojo oceno poskusa
+    Ime(String),                  // Bolderji z imenom, ki vsebuje podan niz
+    MinGrade(u8),                 // Bolderji z oceno večjo ali enako navedeni
+    MaxGrade(u8),                 // Bolderji z oceno manjšo ali enako navedeni
+    SectorId(u16),                // Bolderji v določenem sektorju
 }
 
 // Sector
@@ -219,4 +236,81 @@ impl DiskProblem {
             average_stars: avg_stars,
         }
     }
+
+    pub fn has_tag(&self, tag: &Tag, user: &Option<String>) -> bool {
+        match tag {
+            Tag::Tekmovalni(is_comp) => {
+                if *is_comp {
+                    if !self.base.is_competition {
+                        return false;
+                    }
+                    if let Ok(ts) = self.base.updated_at.parse::<u64>() {
+                        if let Ok(now) = SystemTime::now().duration_since(UNIX_EPOCH) {
+                            return is_same_month(ts, now.as_secs());
+                        }
+                    }
+                    false
+                } else {
+                    self.base.is_competition
+                }
+            }
+            Tag::Avtor(author) => self.base.author.contains(author),
+            Tag::Splezani(poskus) => self.grades.iter().any(|g| match user {
+                Some(username) => &g.username == username && &g.attempt == poskus,
+                None => &g.attempt == poskus,
+            }),
+            Tag::SpremenjeniZaDatumom(timestamp) => self.base.updated_at >= *timestamp,
+            Tag::Ime(name) => self.base.name.contains(name),
+            Tag::MinGrade(g) => self.base.grade >= *g,
+            Tag::MaxGrade(g) => self.base.grade <= *g,
+            Tag::SectorId(id) => self.base.sector_id == *id,
+        }
+    }
+}
+
+fn is_same_month(ts1: u64, ts2: u64) -> bool {
+    let (y1, m1) = to_year_month(ts1);
+    let (y2, m2) = to_year_month(ts2);
+    y1 == y2 && m1 == m2
+}
+
+fn to_year_month(ts: u64) -> (u64, u64) {
+    let seconds_per_day = 86400;
+    let mut days = ts / seconds_per_day;
+    let mut year = 1970;
+    loop {
+        let is_leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        let days_in_year = if is_leap { 366 } else { 365 };
+        if days < days_in_year {
+            break;
+        }
+        days -= days_in_year;
+        year += 1;
+    }
+
+    let is_leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    let days_in_months = [
+        31,
+        if is_leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
+
+    let mut month = 0;
+    for (i, &dim) in days_in_months.iter().enumerate() {
+        if days < dim {
+            month = i as u64;
+            break;
+        }
+        days -= dim;
+    }
+    (year, month)
 }

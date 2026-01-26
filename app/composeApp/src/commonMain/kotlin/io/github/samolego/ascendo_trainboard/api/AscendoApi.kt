@@ -12,6 +12,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.RegisterReques
 import io.github.samolego.ascendo_trainboard.api.generated.models.Sector
 import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.SubmitGradeRequest
+import io.github.samolego.ascendo_trainboard.api.generated.models.Tag
 import io.github.samolego.ascendo_trainboard.api.generated.models.UpdateProblemRequest
 import io.github.samolego.ascendo_trainboard.getPlatform
 import io.ktor.client.HttpClient
@@ -31,6 +32,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
@@ -157,19 +159,15 @@ class AscendoApi(
 
     // Problem endpoints
     suspend fun getProblems(
-        sector: Int? = null,
-        minGrade: Int? = null,
-        maxGrade: Int? = null,
-        name: String? = null,
+        tags: List<Tag> = emptyList(),
         page: Int = 1,
         perPage: Int = 20
     ): Result<ProblemList> {
         return safeApiCall {
             client.get("$baseUrl/problems") {
-                sector?.let { parameter("sector_id", it) }
-                minGrade?.let { parameter("min_grade", it) }
-                maxGrade?.let { parameter("max_grade", it) }
-                name?.let { parameter("name", it) }
+                if (tags.isNotEmpty()) {
+                    parameter("tags", Json.encodeToString(tags))
+                }
                 parameter("page", page)
                 parameter("per_page", perPage)
             }

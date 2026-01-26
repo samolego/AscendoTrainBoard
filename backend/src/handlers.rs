@@ -4,7 +4,7 @@ use axum::{
     http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
 };
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use std::net::SocketAddr;
 
 use crate::auth::{extract_token, generate_salt, hash_password, verify_password};
@@ -340,29 +340,67 @@ pub async fn get_sector_image(
 // Problem handlers
 #[derive(Debug, Deserialize)]
 pub struct ProblemQuery {
-    pub sector_id: Option<u16>,
-    pub min_grade: Option<u8>,
-    pub max_grade: Option<u8>,
-    pub name: Option<String>,
+    pub sector_id: Option<u16>, // deprecated, use tag instead
+    pub min_grade: Option<u8>,  // deprecated, use tag instead
+    pub max_grade: Option<u8>,  // deprecated, use tag instead
+    #[serde(default, deserialize_with = "deserialize_tags")]
+    pub tags: Option<Vec<Tag>>,
     pub page: Option<u32>,
     pub per_page: Option<u32>,
+}
+fn deserialize_tags<'de, D>(deserializer: D) -> Result<Option<Vec<Tag>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: Option<String> = Option::deserialize(deserializer)?;
+    match s {
+        Some(s) => serde_json::from_str(&s).map_err(serde::de::Error::custom),
+        None => Ok(None),
+    }
 }
 
 pub async fn list_problems(
     State(state): State<AppState>,
-    Query(query): Query<ProblemQuery>,
+    headers: HeaderMap,
+    Query(mut query): Query<ProblemQuery>,
 ) -> Result<Json<ProblemList>, (StatusCode, Json<ErrorResponse>)> {
     let problems = state.problems.read().await;
 
+    if let None = query.tags {
+        query.tags = Some(Vec::new());
+    }
+
+    // Compatibility - parse odl min_grade and max_grade and sectord_id to tags
+    if let Some(sector_id) = query.sector_id {
+        let sector_tag = Tag::SectorId(sector_id);
+        query.tags.as_mut().unwrap().push(sector_tag);
+    }
+    if let Some(min_grade) = query.min_grade {
+        let min_grade_tag = Tag::MinGrade(min_grade);
+        query.tags.as_mut().unwrap().push(min_grade_tag);
+    }
+    if let Some(max_grade) = query.max_grade {
+        let max_grade_tag = Tag::MaxGrade(max_grade);
+        query.tags.as_mut().unwrap().push(max_grade_tag);
+    }
+    // End of compatibility
+
+    let potential_user = get_auth_user(&state, &headers).await;
+    let mut user = None;
+    if let Ok((username, _)) = potential_user {
+        user = Some(username);
+    }
+
     let mut filtered: Vec<&DiskProblem> = problems
         .iter()
-        .filter(|p| query.sector_id.map_or(true, |s| p.base.sector_id == s))
-        .filter(|p| query.min_grade.map_or(true, |g| p.base.grade >= g))
-        .filter(|p| query.max_grade.map_or(true, |g| p.base.grade <= g))
-        .filter(|p| {
-            query.name.as_ref().map_or(true, |name| {
-                p.base.name.to_lowercase().contains(&name.to_lowercase())
-            })
+        .filter(|problem| {
+            // Logic remains the same, iterating over a set works just like a vector
+            query
+                .tags
+                .as_ref()
+                .expect("Queri tags is null")
+                .iter()
+                .all(|tag| problem.has_tag(tag, &user))
         })
         .collect();
 
@@ -372,10 +410,6 @@ pub async fn list_problems(
         let a_score = a.get_problem_score();
         let b_score = b.get_problem_score();
 
-        // parse updated_at (seconds as string) to integers for stable ordering
-        let a_time = a.base.updated_at.parse::<u64>().unwrap_or(0);
-        let b_time = b.base.updated_at.parse::<u64>().unwrap_or(0);
-
         // primary: score descending
         match b_score
             .partial_cmp(&a_score)
@@ -383,7 +417,7 @@ pub async fn list_problems(
         {
             std::cmp::Ordering::Equal => {
                 // secondary: time descending (newest first)
-                b_time.cmp(&a_time)
+                b.base.updated_at.cmp(&a.base.updated_at)
             }
             ord => ord,
         }
@@ -478,6 +512,7 @@ pub async fn create_problem(
             grade: payload.grade,
             sector_id: payload.sector_id,
             updated_at: now(),
+            is_competition: payload.is_competition.unwrap_or(false),
         },
         hold_sequence: payload.hold_sequence,
         grades: Vec::new(),
@@ -551,6 +586,9 @@ pub async fn update_problem(
     }
     if let Some(description) = payload.description {
         problem.base.description = Some(description);
+    }
+    if let Some(is_competition) = payload.is_competition {
+        problem.base.is_competition = is_competition;
     }
     if let Some(grade) = payload.grade {
         problem.base.grade = grade;
