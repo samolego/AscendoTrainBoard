@@ -1,18 +1,17 @@
-/* Color Variables */
 :root {
-    /* Dark Mode (Default based on your screenshot) */
-    --bg-color: #121212; /* Very dark background */
-    --header-bg: #5e4200; /* Your dark brown */
-    --accent-color: #edc06c; /* Your gold color */
-    --text-color: #edc06c;
+    /* Dark Mode Defaults */
+    --bg-color: #121212;
+    --accent-color: #edc06c;
+    --bar-bg: #332800;
+    --title-color: #edc06c;
 }
 
 @media (prefers-color-scheme: light) {
     :root {
         --bg-color: #ffffff;
-        --header-bg: #edc06c;
         --accent-color: #5e4200;
-        --text-color: #5e4200;
+        --bar-bg: #e0e0e0;
+        --title-color: #5e4200;
     }
 }
 
@@ -25,8 +24,7 @@ body {
     overflow: hidden;
     background-color: var(--bg-color);
     font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-        sans-serif;
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 #loading-screen {
@@ -42,32 +40,50 @@ body {
 .app-title {
     color: var(--accent-color);
     font-size: 2rem;
-    font-weight: 400;
+    font-weight: 800;
     margin-bottom: 2rem;
     letter-spacing: 1px;
+}
+
+.ascendo-title {
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    font-weight: 300;
 }
 
 .loader-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    height: 80px; /* Fixed height to prevent layout jump when switching to spinner */
 }
 
-.loader-container p {
-    color: var(--accent-color);
-    font-size: 0.9rem;
-    opacity: 0.8;
+/* Progress Bar Styles */
+.progress-wrapper {
+    width: 200px;
+    height: 4px;
+    background-color: var(--bar-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 15px;
 }
 
-/* Custom Spinner matching your app's bottom arc */
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--accent-color);
+    transition: width 0.2s ease-out;
+}
+
+/* Spinner Styles (The Arc from your app) */
 .spinner {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border: 3px solid transparent;
     border-top: 3px solid var(--accent-color);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -77,4 +93,11 @@ body {
     100% {
         transform: rotate(360deg);
     }
+}
+
+#status-text {
+    color: var(--accent-color);
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 400;
 }
