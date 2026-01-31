@@ -1,7 +1,80 @@
-html, body {
+/* Color Variables */
+:root {
+    /* Dark Mode (Default based on your screenshot) */
+    --bg-color: #121212; /* Very dark background */
+    --header-bg: #5e4200; /* Your dark brown */
+    --accent-color: #edc06c; /* Your gold color */
+    --text-color: #edc06c;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-color: #ffffff;
+        --header-bg: #edc06c;
+        --accent-color: #5e4200;
+        --text-color: #5e4200;
+    }
+}
+
+html,
+body {
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
+    background-color: var(--bg-color);
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+        sans-serif;
+}
+
+#loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    text-align: center;
+}
+
+.app-title {
+    color: var(--accent-color);
+    font-size: 2rem;
+    font-weight: 400;
+    margin-bottom: 2rem;
+    letter-spacing: 1px;
+}
+
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.loader-container p {
+    color: var(--accent-color);
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Custom Spinner matching your app's bottom arc */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid transparent;
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
