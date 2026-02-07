@@ -30,8 +30,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,7 +61,8 @@ fun FilterBar(
     isCollapsed: Boolean = false,
     onExpand: () -> Unit = {},
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    // Use rememberSaveable to preserve searchQuery state across recompositions
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     // Use AnimatedContent to switch between the collapsed and expanded content
     AnimatedContent(
@@ -147,13 +150,15 @@ fun FilterBar(
                         .padding(top = 16.dp)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
-                    TagSearchBar(
-                        query = searchQuery,
-                        onQueryChange = { searchQuery = it },
-                        onAddTag = onAddTag,
-                        sectors = sectors,
-                        modifier = Modifier.weight(1f)
-                    )
+                    key("tag_search_bar") {
+                        TagSearchBar(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            onAddTag = onAddTag,
+                            sectors = sectors,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
                 // Active Tags Chips
