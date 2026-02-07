@@ -349,7 +349,7 @@ fun ProblemDetailsScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 16.dp)
+                                    .padding(horizontal = 16.dp, bottom = 24.dp)
                             ) {
                                 leftContent()
                                 rightContent()
@@ -553,7 +553,7 @@ fun GradesInfo(
 ) {
 
     LazyVerticalGrid(
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp, bottom = 24.dp),
         columns = GridCells.Adaptive(minSize = 160.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
