@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -95,6 +98,7 @@ fun ProblemDetailsScreen(
         !editMode && state.problem?.grades?.isNotEmpty() == true && state.problem?.averageGrade != null && state.problem?.averageStars != null
 
     BottomSheetScaffold(
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             TopAppBar(
                 navigationIcon = {
@@ -349,7 +353,7 @@ fun ProblemDetailsScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 16.dp, bottom = 24.dp)
+                                    .padding(horizontal = 16.dp)
                             ) {
                                 leftContent()
                                 rightContent()
@@ -553,7 +557,7 @@ fun GradesInfo(
 ) {
 
     LazyVerticalGrid(
-        modifier = Modifier.padding(horizontal = 16.dp, bottom = 24.dp),
+        modifier = Modifier.padding(horizontal = 16.dp),
         columns = GridCells.Adaptive(minSize = 160.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
