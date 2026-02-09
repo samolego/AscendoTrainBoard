@@ -34,7 +34,7 @@ scp "$TARFILE" "$DEST:/tmp/$FILENAME"
 ssh "$DEST" bash <<EOF
 set -e
 
-BASE="/mnt/dietpi_userdata/trainboard_service"
+BASE="/mnt/dietpi_userdata/trainboard"
 TARGET="\$BASE/$VERSION"
 SYMLINK="\$HOME/ascendo_trainboard"
 
@@ -62,6 +62,11 @@ fi
 # Create sectors symlink
 echo "Creating sectors symlink..."
 ln -s ../sectors "\$TARGET/sectors" 2>/dev/null || true
+
+# TODO : folder is nested
+
+# Allow execution
+sudo setcap 'cap_net_bind_service=+ep' trainboard_service
 
 # Update main symlink
 echo "Updating symlink \$SYMLINK → \$TARGET"
