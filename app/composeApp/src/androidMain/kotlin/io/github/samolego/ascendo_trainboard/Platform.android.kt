@@ -18,7 +18,7 @@ class AndroidPlatform(context: Context) : Platform {
         return if (BuildConfig.DEBUG) {
             "http://192.168.0.140:3000"
         } else {
-            "http://192.168.1.1"
+            "http://ascendo.local"
         }
     }
 }
