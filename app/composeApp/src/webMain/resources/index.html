@@ -8,18 +8,80 @@
         />
         <title>Ascendo TrainBoard</title>
         <link type="text/css" rel="stylesheet" href="styles.css" />
-        <script type="application/javascript" src="composeApp.js"></script>
     </head>
     <body>
         <div id="loading-screen">
             <div class="content">
                 <h1 class="ascendo-title">Ascendo</h1>
                 <h1 class="app-title">TrainBoard</h1>
+
                 <div class="loader-container">
-                    <div class="spinner"></div>
-                    <p>Nalaganje ...</p>
+                    <!-- Progress Bar (Shown during download) -->
+                    <div id="progress-container" class="progress-wrapper">
+                        <div id="progress-bar"></div>
+                    </div>
+
+                    <!-- Spinner (Shown during app startup) -->
+                    <div
+                        id="app-spinner"
+                        class="spinner"
+                        style="display: none"
+                    ></div>
+
+                    <p id="status-text">Priprava ...</p>
                 </div>
             </div>
         </div>
+
+        <script>
+            async function loadApp() {
+                const statusText = document.getElementById("status-text");
+                const progressBar = document.getElementById("progress-bar");
+                const progressContainer =
+                    document.getElementById("progress-container");
+                const appSpinner = document.getElementById("app-spinner");
+
+                try {
+                    // 1. Fetch the WASM file
+                    const response = await fetch("composeApp.wasm");
+                    const reader = response.body.getReader();
+                    const contentLength =
+                        +response.headers.get("Content-Length");
+
+                    let receivedLength = 0;
+                    let chunks = [];
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        receivedLength += value.length;
+
+                        if (contentLength) {
+                            const step = Math.round(
+                                (receivedLength / contentLength) * 100,
+                            );
+                            statusText.innerText = `Nalaganje: ${step}%`;
+                            progressBar.style.width = `${step}%`;
+                        }
+                    }
+
+                    // 2. Download finished - Switch to Spinner
+                    progressContainer.style.display = "none"; // Hide progress bar
+                    appSpinner.style.display = "block"; // Show spinner
+                    statusText.innerText = "Zagon aplikacije ...";
+
+                    // 3. Load the JS script
+                    const script = document.createElement("script");
+                    script.src = "composeApp.js";
+                    document.body.appendChild(script);
+                } catch (error) {
+                    statusText.innerText = "Napaka pri nalaganju.";
+                    console.error(error);
+                }
+            }
+
+            loadApp();
+        </script>
     </body>
 </html>

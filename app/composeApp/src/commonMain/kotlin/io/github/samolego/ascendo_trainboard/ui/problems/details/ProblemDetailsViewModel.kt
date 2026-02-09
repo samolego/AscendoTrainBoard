@@ -182,9 +182,9 @@ class ProblemDetailsViewModel(
                 api.updateProblem(updatedProblem.id, request)
             }
 
-            status.onSuccess {
+            status.onSuccess { savedProblem ->
                 _state.update {
-                    it.copy(problem = updatedProblem)
+                    it.copy(problem = savedProblem)
                 }
             }
                 .onFailure { error ->
