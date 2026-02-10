@@ -39,8 +39,6 @@ fun FilterBar(
     onGradeRangeChanged: (Int, Int) -> Unit,
     onClearFilters: () -> Unit,
     modifier: Modifier = Modifier,
-    isCollapsed: Boolean = false,
-    onExpand: () -> Unit = {},
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -115,8 +113,6 @@ private fun PreviewExtendedFilterBar() {
         onRemoveTag = {},
         onGradeRangeChanged = { _, _ -> },
         onClearFilters = {},
-        isCollapsed = false,
-        onExpand = {},
     )
 }
 
@@ -132,7 +128,5 @@ private fun PreviewCollapsedFilterBar() {
         onRemoveTag = {},
         onGradeRangeChanged = { _, _ -> },
         onClearFilters = {},
-        isCollapsed = true,
-        onExpand = {},
     )
 }
