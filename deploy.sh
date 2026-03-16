@@ -38,11 +38,8 @@ BASE="/mnt/dietpi_userdata/trainboard"
 TARGET="\$BASE/$VERSION"
 SYMLINK="\$HOME/ascendo_trainboard"
 
-echo "Creating target directory: \$TARGET"
-mkdir -p "\$TARGET"
-
 echo "Extracting archive..."
-tar -xzf "/tmp/$FILENAME" -C "\$TARGET"
+tar -xzf "/tmp/$FILENAME" -C "\$BASE"
 
 echo "Cleaning uploaded tar..."
 rm "/tmp/$FILENAME"
@@ -66,7 +63,7 @@ ln -s ../sectors "\$TARGET/sectors" 2>/dev/null || true
 # TODO : folder is nested
 
 # Allow execution
-sudo setcap 'cap_net_bind_service=+ep' trainboard_service
+sudo setcap 'cap_net_bind_service=+ep' "\$TARGET/trainboard_service"
 
 # Update main symlink
 echo "Updating symlink \$SYMLINK → \$TARGET"
