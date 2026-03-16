@@ -30,6 +30,7 @@ import kotlinx.serialization.encoding.*
  * @param sectorId Sector ID
  * @param description 
  * @param isCompetition 
+ * @param winner Whether this boulder was a winning one
  * @param averageGrade Average of all user-submitted grades (null if no grades)
  * @param averageStars Average of all user ratings (null if no grades)
  * @param updatedAt 
@@ -54,6 +55,9 @@ data class ProblemSummary (
     @SerialName(value = "description") val description: kotlin.String? = null,
 
     @SerialName(value = "is_competition") val isCompetition: kotlin.Boolean? = null,
+
+    /* Whether this boulder was a winning one */
+    @SerialName(value = "winner") val winner: kotlin.Boolean? = null,
 
     /* Average of all user-submitted grades (null if no grades) */
     @SerialName(value = "average_grade") val averageGrade: kotlin.Float? = null,

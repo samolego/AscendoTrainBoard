@@ -5,8 +5,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 // Settings (read-only, loaded on startup)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
-    pub ap_name: String,
-    pub ap_password: String,
     pub admin_users: Vec<String>,
 }
 
@@ -62,6 +60,8 @@ pub struct BaseProblem {
     pub updated_at: String,
     #[serde(default)]
     pub is_competition: bool,
+    #[serde(default)]
+    pub winner: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -113,6 +113,7 @@ pub struct UpdateProblemRequest {
     pub grade: Option<u8>,
     pub hold_sequence: Option<Vec<Hold>>,
     pub is_competition: Option<bool>,
+    pub winner: Option<bool>,
 }
 
 // Grade

@@ -13,6 +13,7 @@
 | **grades** | [**kotlin.collections.List&lt;Grade&gt;**](Grade.md) | Array of user-submitted grades and ratings for this problem |  |
 | **description** | **kotlin.String** |  |  [optional] |
 | **isCompetition** | **kotlin.Boolean** |  |  [optional] |
+| **winner** | **kotlin.Boolean** | Whether this boulder was a winning one |  [optional] |
 | **averageGrade** | **kotlin.Float** | Average of all user-submitted grades (null if no grades) |  [optional] |
 | **averageStars** | **kotlin.Float** | Average of all user ratings (null if no grades) |  [optional] |
 | **updatedAt** | **kotlin.String** |  |  [optional] |

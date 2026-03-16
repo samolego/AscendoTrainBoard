@@ -11,6 +11,7 @@
 | **sectorId** | **kotlin.Int** | Sector ID |  |
 | **description** | **kotlin.String** |  |  [optional] |
 | **isCompetition** | **kotlin.Boolean** |  |  [optional] |
+| **winner** | **kotlin.Boolean** | Whether this boulder was a winning one |  [optional] |
 | **averageGrade** | **kotlin.Float** | Average of all user-submitted grades (null if no grades) |  [optional] |
 | **averageStars** | **kotlin.Float** | Average of all user ratings (null if no grades) |  [optional] |
 | **updatedAt** | **kotlin.String** |  |  [optional] |

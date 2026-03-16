@@ -878,6 +878,9 @@ components:
           description: Sector ID
         is_competition:
           type: boolean
+        winner:
+          description: Whether this boulder was a winning one
+          type: boolean
         average_grade:
           type: number
           format: float
@@ -1001,6 +1004,8 @@ components:
           format: int32
           example: 7
         is_competition:
+          type: boolean
+        winner:
           type: boolean
         hold_sequence:
           type: array

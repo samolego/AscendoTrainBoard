@@ -513,6 +513,7 @@ pub async fn create_problem(
             sector_id: payload.sector_id,
             updated_at: now(),
             is_competition: payload.is_competition.unwrap_or(false),
+            winner: false,
         },
         hold_sequence: payload.hold_sequence,
         grades: Vec::new(),
@@ -597,6 +598,12 @@ pub async fn update_problem(
         problem.hold_sequence = hold_sequence;
         // Clear grades if hold sequence changes
         problem.grades.clear();
+    }
+
+    if let Some(winner) = payload.winner {
+        if is_admin {
+            problem.base.winner = winner;
+        }
     }
 
     problem.base.updated_at = now();

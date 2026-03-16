@@ -1,7 +1,16 @@
 package io.github.samolego.ascendo_trainboard.ui.problems.list
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,9 +23,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemSummary
@@ -32,35 +46,78 @@ fun ProblemCard(
     sectorName: String,
     onClick: () -> Unit,
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+        val shimmerOffset by infiniteTransition.animateFloat(
+        initialValue = -1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerOffset"
+    )
+
+    val goldBorder = Color(0xFFC9A84C)
+    val winner = problem.winner == true
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8f))
+            .clip(RoundedCornerShape(8.dp))
+            .then(
+                if (winner) {
+                    Modifier.drawWithContent {
+                        drawContent()
+                        val shimmerBrush = Brush.linearGradient(
+                            colorStops = arrayOf(
+                                0.0f to Color.Transparent,
+                                0.4f to Color.Transparent,
+                                0.5f to Color(0x55FFD764),
+                                0.6f to Color.Transparent,
+                                1.0f to Color.Transparent,
+                            ),
+                        start = Offset(shimmerOffset * size.width, 0f),
+                        end = Offset((shimmerOffset + 1f) * size.width, size.height)
+                        )
+                        drawRect(brush = shimmerBrush, size = size)
+
+                    }
+                } else Modifier
+            )
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = if (winner) {
+            BorderStroke(1.5.dp, goldBorder)
+        } else null,
+        colors = if (winner) {
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            )
+        } else CardDefaults.cardColors()
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Title row
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = problem.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
-                )
-
-                // Grade badge
-                GradeBadge(
-                    grade = problem.grade,
-                    usePrefixText = false,
-                )
+                ) {
+                    Text(
+                        text = problem.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (winner) {
+                        WinnerBadge()
+                    }
+                }
+                GradeBadge(grade = problem.grade, usePrefixText = false)
             }
+
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -139,6 +196,29 @@ fun ProblemCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun WinnerBadge() {
+    val gold = Color(0xFFC9A84C)
+    val darkGold = Color(0xFF5A3E00)
+    Box(
+        modifier = Modifier
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(gold, Color(0xFFF0D070), gold)
+                ),
+                shape = RoundedCornerShape(50)
+            )
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = "🏆 Winner",
+            style = MaterialTheme.typography.labelSmall,
+            color = darkGold,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 

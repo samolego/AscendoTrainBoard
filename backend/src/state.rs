@@ -30,8 +30,6 @@ impl AppState {
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let settings_path = data_path.join("settings.json");
         let default_settings = Settings {
-            ap_name: "AscendoTrainBoard".to_string(),
-            ap_password: "plezaj-gor".to_string(),
             admin_users: vec![],
         };
         let settings = if settings_path.exists() {

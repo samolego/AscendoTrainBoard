@@ -8,6 +8,7 @@
 | **description** | **kotlin.String** |  |  [optional] |
 | **grade** | **kotlin.Int** |  |  [optional] |
 | **isCompetition** | **kotlin.Boolean** |  |  [optional] |
+| **winner** | **kotlin.Boolean** |  |  [optional] |
 | **holdSequence** | **kotlin.collections.List&lt;kotlin.collections.List&lt;kotlin.Int&gt;&gt;** | Array of [index, type] where index is the hold index of the sector&#39;s holds array (0-indexed) and type is hold type (0&#x3D;Start, 1&#x3D;Foot, 2&#x3D;Normal, 3&#x3D;End) |  [optional] |
 
 
