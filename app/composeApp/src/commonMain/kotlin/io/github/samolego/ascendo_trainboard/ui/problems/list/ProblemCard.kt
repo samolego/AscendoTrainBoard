@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -36,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.generated.models.ProblemSummary
 import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.getFrenchGrade
+import io.github.samolego.ascendo_trainboard.ui.theme.darkGold
+import io.github.samolego.ascendo_trainboard.ui.theme.gold
+import io.github.samolego.ascendo_trainboard.ui.theme.lightGold
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
 
@@ -57,13 +59,11 @@ fun ProblemCard(
         label = "shimmerOffset"
     )
 
-    val goldBorder = Color(0xFFC9A84C)
     val winner = problem.winner == true
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
             .then(
                 if (winner) {
                     Modifier.drawWithContent {
@@ -72,7 +72,7 @@ fun ProblemCard(
                             colorStops = arrayOf(
                                 0.0f to Color.Transparent,
                                 0.4f to Color.Transparent,
-                                0.5f to Color(0x55FFD764),
+                                0.5f to lightGold,
                                 0.6f to Color.Transparent,
                                 1.0f to Color.Transparent,
                             ),
@@ -86,8 +86,9 @@ fun ProblemCard(
             )
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(8.dp),
         border = if (winner) {
-            BorderStroke(1.5.dp, goldBorder)
+            BorderStroke(1.5.dp, gold)
         } else null,
         colors = if (winner) {
             CardDefaults.cardColors(
@@ -201,8 +202,6 @@ fun ProblemCard(
 
 @Composable
 private fun WinnerBadge() {
-    val gold = Color(0xFFC9A84C)
-    val darkGold = Color(0xFF5A3E00)
     Box(
         modifier = Modifier
             .background(
