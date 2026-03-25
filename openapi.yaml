@@ -1086,6 +1086,8 @@ components:
       properties:
         Tekmovalni:
           type: boolean
+        Zmagovalni:
+          type: boolean
         Avtor:
           type: string
         SpremenjeniZaDatumom:

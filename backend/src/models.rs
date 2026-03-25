@@ -143,6 +143,7 @@ pub struct SubmitGradeRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Tag {
     Tekmovalni(bool),             // je tekmovalni za ta mesec ali ne
+    Zmagovalni(bool),             // je zmagal na tekmovanju
     Avtor(String),                // Avtor bolderja
     SpremenjeniZaDatumom(String), // Bolderji, spremenjeni za datumom
     Splezani(Attempt),            // Bolderji z mojo oceno poskusa
@@ -252,8 +253,11 @@ impl DiskProblem {
                     }
                     false
                 } else {
-                    self.base.is_competition
+                    !self.base.is_competition
                 }
+            }
+            Tag::Zmagovalni(is_winner) => {
+                *is_winner && self.base.winner || !*is_winner && !self.base.winner
             }
             Tag::Avtor(author) => self.base.author.contains(author),
             Tag::Splezani(poskus) => self.grades.iter().any(|g| match user {

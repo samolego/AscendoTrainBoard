@@ -5,6 +5,7 @@
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
 | **tekmovalni** | **kotlin.Boolean** |  |  [optional] |
+| **zmagovalni** | **kotlin.Boolean** |  |  [optional] |
 | **avtor** | **kotlin.String** |  |  [optional] |
 | **spremenjeniZaDatumom** | **kotlin.Long** |  |  [optional] |
 | **splezani** | [**Attempt**](Attempt.md) |  |  [optional] |

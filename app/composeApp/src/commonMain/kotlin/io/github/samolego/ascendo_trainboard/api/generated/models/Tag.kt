@@ -25,6 +25,7 @@ import kotlinx.serialization.encoding.*
  * Filtering tag. Only one property should be set per object.
  *
  * @param tekmovalni 
+ * @param zmagovalni 
  * @param avtor 
  * @param spremenjeniZaDatumom 
  * @param splezani 
@@ -38,6 +39,8 @@ import kotlinx.serialization.encoding.*
 data class Tag (
 
     @SerialName(value = "Tekmovalni") val tekmovalni: kotlin.Boolean? = null,
+
+    @SerialName(value = "Zmagovalni") val zmagovalni: kotlin.Boolean? = null,
 
     @SerialName(value = "Avtor") val avtor: kotlin.String? = null,
 
