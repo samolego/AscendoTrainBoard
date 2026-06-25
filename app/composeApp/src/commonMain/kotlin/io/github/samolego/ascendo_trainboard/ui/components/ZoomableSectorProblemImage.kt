@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -205,6 +204,7 @@ fun ZoomableSectorProblemImage(
                 }
         ) {
             val scale = size.width / sector.imageWidth
+            val strokePx = 2.dp.toPx() / zoom
 
             val markHold = { holdRect: HoldRect, color: Color, selected: Boolean ->
                 val rect = holdRect.rect
@@ -218,27 +218,18 @@ fun ZoomableSectorProblemImage(
                 if (selected) {
                     drawRect(
                         color = color.copy(alpha = 0.5f),
-                        topLeft = Offset(scaledRect.left, scaledRect.top),
-                        size = Size(
-                            width = scaledRect.width,
-                            height = scaledRect.height,
-                        ),
+                        topLeft = scaledRect.topLeft,
+                        size = scaledRect.size,
                     )
                 }
 
                 drawRect(
                     color = color,
-                    topLeft = Offset(scaledRect.left, scaledRect.top),
-                    size = Size(
-                        width = scaledRect.width,
-                        height = scaledRect.height,
-                    ),
-                    style = Stroke(
-                        width = 2.dp.toPx(),
-                        cap = StrokeCap.Round,
-                    ),
+                    topLeft = scaledRect.topLeft,
+                    size = scaledRect.size,
+                    style = Stroke(width = strokePx, cap = StrokeCap.Round),
+                )
 
-                    )
             }
 
             if (interactive) {

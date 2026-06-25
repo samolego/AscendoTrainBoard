@@ -16,7 +16,7 @@ class AndroidPlatform(context: Context) : Platform {
     override fun baseUrl(): String {
         Logger.getLogger("AndroidPlatform").info("baseUrl() called: ${BuildConfig.DEBUG} vs ${BuildKonfig.DEBUG}")
         return if (BuildConfig.DEBUG) {
-            "http://192.168.0.140:3000"
+            "http://192.168.0.138:3000"
         } else {
             "http://ascendo.local"
         }

@@ -213,7 +213,7 @@ private fun WinnerBadge() {
             .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "🏆 Winner",
+            text = "🏆 Zmagovalni",
             style = MaterialTheme.typography.labelSmall,
             color = darkGold,
             fontWeight = FontWeight.Medium

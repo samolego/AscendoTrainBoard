@@ -4,11 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -86,6 +90,7 @@ fun ProblemDetailsScreen(
     var showEditMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isWideScreen by remember { mutableStateOf(false) }
+    val navBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     val goBack = {
         viewModel.toggleEditMode(false)
@@ -191,7 +196,7 @@ fun ProblemDetailsScreen(
                 },
             )
         },
-        sheetPeekHeight = if (shouldShowGradesInfo && !isWideScreen) 96.dp else 0.dp,
+        sheetPeekHeight = if (shouldShowGradesInfo && !isWideScreen) 96.dp + navBarHeight else 0.dp,
         sheetSwipeEnabled = shouldShowGradesInfo && !isWideScreen,
         sheetContent = {
             if (shouldShowGradesInfo && !isWideScreen) {
@@ -503,7 +508,7 @@ fun ProblemDetails(
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Opriimek #${selectedHold!!.holdIndex}")
+                Text("Oprimek #${selectedHold!!.holdIndex}")
                 IconButton(
                     onClick = {
                         onHoldRemoved(selectedHold!!.holdIndex)
@@ -557,6 +562,9 @@ fun GradesInfo(
         columns = GridCells.Adaptive(minSize = 160.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(
+            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp
+        ),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             preContent()

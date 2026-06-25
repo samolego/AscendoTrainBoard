@@ -59,6 +59,7 @@ async fn main() {
         .allow_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE]);
 
     const API_V1_AUTH: &str = "/api/v1/auth";
+    const API_V1_ADMIN: &str = "/api/v1/admin";
     const API_V1_SECTORS: &str = "/api/v1/sectors";
     const API_V1_SECTORS_ID: &str = "/api/v1/sectors/{id}";
     const API_V1_PROBLEMS: &str = "/api/v1/problems";
@@ -76,6 +77,18 @@ async fn main() {
             &format!("{}/rotate_token", API_V1_AUTH),
             get(handlers::rotate_token),
         )
+        .route(
+            &format!("{}/reset_password", API_V1_AUTH),
+            post(handlers::reset_password),
+        )
+        .route(
+            &format!("{}/users", API_V1_ADMIN),
+            get(handlers::list_users), //.layer(auth::admin_required()),
+        )
+        // .route(
+        //     &format!("{}/users/{}", API_V1_ADMIN, "{username}"),
+        //     post(handlers::edit_user).layer(auth::admin_required()),
+        // )
         .route(API_V1_SECTORS, get(handlers::list_sectors))
         .route(API_V1_SECTORS_ID, get(handlers::get_sector))
         .route(

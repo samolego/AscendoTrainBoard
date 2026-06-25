@@ -12,6 +12,8 @@ use crate::models::*;
 
 use crate::state::AppState;
 
+type ErrorResp = (StatusCode, Json<ErrorResponse>);
+
 // Helper to get current timestamp
 fn now() -> String {
     std::time::SystemTime::now()
@@ -25,7 +27,7 @@ fn now() -> String {
 async fn get_auth_user(
     state: &AppState,
     headers: &HeaderMap,
-) -> Result<(String, String), Response> {
+) -> Result<(String, String), ErrorResp> {
     let auth_header = headers
         .get(header::AUTHORIZATION)
         .and_then(|h| h.to_str().ok());
@@ -38,7 +40,6 @@ async fn get_auth_user(
                 timeout: None,
             }),
         )
-            .into_response()
     })?;
 
     let sessions = state.sessions.read().await;
@@ -51,7 +52,6 @@ async fn get_auth_user(
                 timeout: None,
             }),
         )
-            .into_response()
     })?;
 
     Ok((username.clone(), token))
@@ -61,7 +61,7 @@ async fn get_auth_user(
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<impl IntoResponse, ErrorResp> {
     if payload.username.len() < 3 || payload.username.len() > 50 {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -73,11 +73,12 @@ pub async fn register(
         ));
     }
 
-    if payload.password.len() < 6 {
+    if payload.password.len() < 4 {
+        println!("{}", payload.password);
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse {
-                error: "Password must be at least 6 characters".to_string(),
+                error: "Password must be at least 4 characters".to_string(),
                 code: "INVALID_PASSWORD".to_string(),
                 timeout: None,
             }),
@@ -130,7 +131,7 @@ pub async fn login(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(payload): Json<LoginRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<impl IntoResponse, ErrorResp> {
     let ip = addr.ip();
 
     let mut rate_limiter = state.rate_limiter.write().await;
@@ -203,20 +204,8 @@ pub async fn login(
 pub async fn logout(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let auth_header = headers
-        .get(header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok());
-    let token = extract_token(auth_header).ok_or_else(|| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse {
-                error: "Not authenticated".to_string(),
-                code: "NOT_AUTHENTICATED".to_string(),
-                timeout: None,
-            }),
-        )
-    })?;
+) -> Result<impl IntoResponse, ErrorResp> {
+    let (_, token) = get_auth_user(&state, &headers).await?;
 
     let mut sessions = state.sessions.write().await;
     sessions.remove_session(&token);
@@ -224,10 +213,58 @@ pub async fn logout(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn reset_password(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(payload): Json<ChangePasswordRequest>,
+) -> Result<impl IntoResponse, ErrorResp> {
+    let (username, _) = get_auth_user(&state, &headers).await?;
+
+    let mut users = state.users.write().await;
+
+    let user = users
+        .iter_mut()
+        .find(|u| u.username == username)
+        .ok_or_else(|| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Authenticated user not found".to_string(),
+                    code: "USER_NOT_FOUND".to_string(),
+                    timeout: None,
+                }),
+            )
+        })?;
+
+    if !verify_password(&payload.old_password, &user.salt, &user.password_hash) {
+        let mut rate_limiter = state.rate_limiter.write().await;
+        let ip = addr.ip();
+        let timeout = rate_limiter.record_failed_attempt(ip);
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse {
+                error: "Invalid credentials".to_string(),
+                code: "INVALID_CREDENTIALS".to_string(),
+                timeout: Some(timeout),
+            }),
+        ));
+    }
+
+    let new_salt = generate_salt();
+    let new_password_hash = hash_password(&payload.new_password, &new_salt);
+
+    user.salt = new_salt;
+    user.password_hash = new_password_hash;
+    state.mark_dirty();
+
+    Ok(StatusCode::OK)
+}
+
 pub async fn rotate_token(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<impl IntoResponse, Response> {
+) -> Result<impl IntoResponse, ErrorResp> {
     let (username, token) = get_auth_user(&state, &headers).await?;
 
     let is_admin = state.is_admin(&username);
@@ -245,14 +282,14 @@ pub async fn rotate_token(
 // Sector handlers
 pub async fn list_sectors(
     State(state): State<AppState>,
-) -> Result<Json<Vec<APISectorSummary>>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<Vec<APISectorSummary>>, ErrorResp> {
     Ok(Json(state.sectors.clone()))
 }
 
 pub async fn get_sector(
     State(state): State<AppState>,
     Path(id): Path<u16>,
-) -> Result<Json<APISectorDetail>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<APISectorDetail>, ErrorResp> {
     let metadata = state.sector_metadata.get(&id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
@@ -280,7 +317,7 @@ pub async fn get_sector(
 pub async fn get_sector_image(
     State(state): State<AppState>,
     Path(id): Path<u16>,
-) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Response, ErrorResp> {
     let metadata = state.sector_metadata.get(&id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
@@ -363,7 +400,7 @@ pub async fn list_problems(
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(mut query): Query<ProblemQuery>,
-) -> Result<Json<ProblemList>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<ProblemList>, ErrorResp> {
     let problems = state.problems.read().await;
 
     if let None = query.tags {
@@ -446,7 +483,7 @@ pub async fn list_problems(
 pub async fn get_problem(
     State(state): State<AppState>,
     Path(id): Path<u32>,
-) -> Result<Json<APIProblemDetail>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<APIProblemDetail>, ErrorResp> {
     let problems = state.problems.read().await;
 
     let problem = problems.iter().find(|p| p.base.id == id).ok_or_else(|| {
@@ -467,7 +504,7 @@ pub async fn create_problem(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(payload): Json<CreateProblemRequest>,
-) -> Result<impl IntoResponse, Response> {
+) -> Result<impl IntoResponse, ErrorResp> {
     let (username, _) = get_auth_user(&state, &headers).await?;
 
     // Validate that sector_id exists
@@ -484,8 +521,7 @@ pub async fn create_problem(
                 code: "INVALID_SECTOR".to_string(),
                 timeout: None,
             }),
-        )
-            .into_response());
+        ));
     }
 
     if payload.hold_sequence.is_empty() {
@@ -496,8 +532,7 @@ pub async fn create_problem(
                 code: "INVALID_HOLD_SEQUENCE".to_string(),
                 timeout: None,
             }),
-        )
-            .into_response());
+        ));
     }
 
     let id = state.get_next_problem_id().await;
@@ -535,7 +570,7 @@ pub async fn update_problem(
     headers: HeaderMap,
     Path(id): Path<u32>,
     Json(payload): Json<UpdateProblemRequest>,
-) -> Result<impl IntoResponse, Response> {
+) -> Result<impl IntoResponse, ErrorResp> {
     let (username, _) = get_auth_user(&state, &headers).await?;
 
     let mut problems = state.problems.write().await;
@@ -552,7 +587,6 @@ pub async fn update_problem(
                     timeout: None,
                 }),
             )
-                .into_response()
         })?;
 
     let is_admin = state.is_admin(&username);
@@ -564,8 +598,7 @@ pub async fn update_problem(
                 code: "FORBIDDEN".to_string(),
                 timeout: None,
             }),
-        )
-            .into_response());
+        ));
     }
 
     if let Some(ref seq) = payload.hold_sequence {
@@ -577,8 +610,7 @@ pub async fn update_problem(
                     code: "INVALID_HOLD_SEQUENCE".to_string(),
                     timeout: None,
                 }),
-            )
-                .into_response());
+            ));
         }
     }
 
@@ -620,7 +652,7 @@ pub async fn delete_problem(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<u32>,
-) -> Result<impl IntoResponse, Response> {
+) -> Result<impl IntoResponse, ErrorResp> {
     let (username, _) = get_auth_user(&state, &headers).await?;
 
     let mut problems = state.problems.write().await;
@@ -637,7 +669,6 @@ pub async fn delete_problem(
                     timeout: None,
                 }),
             )
-                .into_response()
         })?;
 
     let is_admin = state.is_admin(&username);
@@ -649,8 +680,7 @@ pub async fn delete_problem(
                 code: "FORBIDDEN".to_string(),
                 timeout: None,
             }),
-        )
-            .into_response());
+        ));
     }
 
     problems.remove(pos);
@@ -658,7 +688,7 @@ pub async fn delete_problem(
 
     state.mark_dirty();
 
-    Ok(StatusCode::NO_CONTENT.into_response())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn submit_problem_grade(
@@ -666,7 +696,7 @@ pub async fn submit_problem_grade(
     headers: HeaderMap,
     Path(id): Path<u32>,
     Json(payload): Json<SubmitGradeRequest>,
-) -> Result<impl IntoResponse, Response> {
+) -> Result<impl IntoResponse, ErrorResp> {
     let (username, _) = get_auth_user(&state, &headers).await?;
 
     if payload.stars < 1 || payload.stars > 5 {
@@ -677,8 +707,7 @@ pub async fn submit_problem_grade(
                 code: "INVALID_STARS".to_string(),
                 timeout: None,
             }),
-        )
-            .into_response());
+        ));
     }
 
     let mut problems = state.problems.write().await;
@@ -695,7 +724,6 @@ pub async fn submit_problem_grade(
                     timeout: None,
                 }),
             )
-                .into_response()
         })?;
 
     let existing_pos = problem.grades.iter().position(|g| g.username == username);
@@ -722,5 +750,33 @@ pub async fn submit_problem_grade(
 
     state.mark_dirty();
 
-    Ok((status, Json(grade)).into_response())
+    Ok((status, Json(grade)))
+}
+
+pub async fn list_users(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, ErrorResp> {
+    let (username, _) = get_auth_user(&state, &headers).await?;
+
+    let is_admin = state.is_admin(&username);
+    if !is_admin {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse {
+                error: "Only admins can query users".to_string(),
+                code: "NOADMIN_USERS_ACCESS".to_string(),
+                timeout: None,
+            }),
+        ));
+    }
+
+    let users = state.users.read().await;
+
+    let users: Vec<UserDetail> = users
+        .iter()
+        .map(|u| UserDetail::from_user(u, &state))
+        .collect();
+
+    Ok((StatusCode::OK, Json(users)))
 }

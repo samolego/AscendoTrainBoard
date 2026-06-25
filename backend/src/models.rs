@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use crate::state::AppState;
+
 // Settings (read-only, loaded on startup)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -14,6 +16,23 @@ pub struct User {
     pub username: String,
     pub password_hash: String,
     pub salt: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Username(pub String);
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserDetail {
+    pub username: String,
+    pub is_admin: bool,
+}
+
+impl UserDetail {
+    pub fn from_user(u: &User, state: &AppState) -> Self {
+        let username = u.username.clone();
+        let is_admin = state.is_admin(&username);
+        UserDetail { username, is_admin }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,6 +52,12 @@ pub struct LoginResponse {
     pub token: String,
     pub username: String,
     pub is_admin: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChangePasswordRequest {
+    pub old_password: String,
+    pub new_password: String,
 }
 
 // Hold Type
