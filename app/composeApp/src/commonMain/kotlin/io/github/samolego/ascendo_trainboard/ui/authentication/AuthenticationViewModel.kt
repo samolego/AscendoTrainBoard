@@ -38,14 +38,14 @@ class AuthenticationViewModel(
     val state: StateFlow<AuthenticationState> = _state.asStateFlow()
 
     suspend fun restartSession(loadData: suspend () -> LoginResponse?) {
-        loadData()?.let {
-            api.restartSession(it)
+        loadData()?.let { response ->
+            api.restartSession(response)
                 .onSuccess { response ->
                     _state.update {
                         it.copy(
                             isAuthenticated = true,
                             username = response.username,
-                            error = null
+                            error = null,
                         )
                     }
                 }
@@ -54,7 +54,7 @@ class AuthenticationViewModel(
                         it.copy(
                             isAuthenticated = false,
                             username = "",
-                            error = null
+                            error = null,
                         )
                     }
                 }
@@ -119,7 +119,8 @@ class AuthenticationViewModel(
             it.copy(
                 isAuthenticated = false,
                 username = "",
-                timeoutUntil = null
+                timeoutUntil = null,
+                error = null,
             )
         }
     }

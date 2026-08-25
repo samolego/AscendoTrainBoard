@@ -1,11 +1,11 @@
 
-# UserDetail
+# ResetPasswordRequest
 
 ## Properties
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
 | **username** | **kotlin.String** |  |  |
-| **isAdmin** | **kotlin.Boolean** |  |  [optional] |
+| **password** | **kotlin.String** |  |  |
 
 
 

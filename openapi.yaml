@@ -1119,8 +1119,10 @@ components:
           $ref: "#/components/schemas/Attempt"
     Tag:
       type: object
-      description: Filtering tag. Only one property should be set per object.
+      description: Filtering tag. Only one property should be set per object, except for "negated"
       properties:
+        Negated:
+          type: boolean
         Tekmovalni:
           type: boolean
         Zmagovalni:

@@ -377,15 +377,12 @@ pub async fn get_sector_image(
 // Problem handlers
 #[derive(Debug, Deserialize)]
 pub struct ProblemQuery {
-    pub sector_id: Option<u16>, // deprecated, use tag instead
-    pub min_grade: Option<u8>,  // deprecated, use tag instead
-    pub max_grade: Option<u8>,  // deprecated, use tag instead
     #[serde(default, deserialize_with = "deserialize_tags")]
-    pub tags: Option<Vec<Tag>>,
+    pub tags: Option<Vec<PossiblyNegatedTag>>,
     pub page: Option<u32>,
     pub per_page: Option<u32>,
 }
-fn deserialize_tags<'de, D>(deserializer: D) -> Result<Option<Vec<Tag>>, D::Error>
+fn deserialize_tags<'de, D>(deserializer: D) -> Result<Option<Vec<PossiblyNegatedTag>>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -406,21 +403,6 @@ pub async fn list_problems(
     if let None = query.tags {
         query.tags = Some(Vec::new());
     }
-
-    // Compatibility - parse odl min_grade and max_grade and sectord_id to tags
-    if let Some(sector_id) = query.sector_id {
-        let sector_tag = Tag::SectorId(sector_id);
-        query.tags.as_mut().unwrap().push(sector_tag);
-    }
-    if let Some(min_grade) = query.min_grade {
-        let min_grade_tag = Tag::MinGrade(min_grade);
-        query.tags.as_mut().unwrap().push(min_grade_tag);
-    }
-    if let Some(max_grade) = query.max_grade {
-        let max_grade_tag = Tag::MaxGrade(max_grade);
-        query.tags.as_mut().unwrap().push(max_grade_tag);
-    }
-    // End of compatibility
 
     let potential_user = get_auth_user(&state, &headers).await;
     let mut user = None;

@@ -70,6 +70,7 @@ class ProblemDetailsViewModel(
                             isLoading = false,
                             inEditMode = false,
                             canEdit = api.username == problem.author,
+                            error = null,
                         )
                     }
                 }.onFailure { error ->

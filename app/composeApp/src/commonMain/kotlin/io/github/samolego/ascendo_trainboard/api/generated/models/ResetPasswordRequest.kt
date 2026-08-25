@@ -24,15 +24,15 @@ import kotlinx.serialization.encoding.*
  * 
  *
  * @param username 
- * @param isAdmin 
+ * @param password 
  */
 @Serializable
 
-data class UserDetail (
+data class ResetPasswordRequest (
 
     @SerialName(value = "username") @Required val username: kotlin.String,
 
-    @SerialName(value = "is_admin") val isAdmin: kotlin.Boolean? = null
+    @SerialName(value = "password") @Required val password: kotlin.String
 
 ) {
 

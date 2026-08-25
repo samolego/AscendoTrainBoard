@@ -178,6 +178,14 @@ pub enum Tag {
     SectorId(u16),                // Bolderji v določenem sektorju
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PossiblyNegatedTag {
+    #[serde(default)]
+    pub negated: bool,
+    #[serde(flatten)]
+    pub tag: Tag,
+}
+
 // Sector
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiskSectorMetadata {
@@ -264,37 +272,39 @@ impl DiskProblem {
         }
     }
 
-    pub fn has_tag(&self, tag: &Tag, user: &Option<String>) -> bool {
-        match tag {
-            Tag::Tekmovalni(is_comp) => {
-                if *is_comp {
-                    if !self.base.is_competition {
-                        return false;
-                    }
-                    if let Ok(ts) = self.base.updated_at.parse::<u64>() {
-                        if let Ok(now) = SystemTime::now().duration_since(UNIX_EPOCH) {
-                            return is_same_month(ts, now.as_secs());
+    pub fn has_tag(&self, ptag: &PossiblyNegatedTag, user: &Option<String>) -> bool {
+        let PossiblyNegatedTag { tag, negated } = ptag;
+        return negated
+            ^ match tag {
+                Tag::Tekmovalni(is_comp) => {
+                    if *is_comp {
+                        if !self.base.is_competition {
+                            return false;
                         }
+                        if let Ok(ts) = self.base.updated_at.parse::<u64>() {
+                            if let Ok(now) = SystemTime::now().duration_since(UNIX_EPOCH) {
+                                return is_same_month(ts, now.as_secs());
+                            }
+                        }
+                        false
+                    } else {
+                        !self.base.is_competition
                     }
-                    false
-                } else {
-                    !self.base.is_competition
                 }
-            }
-            Tag::Zmagovalni(is_winner) => {
-                *is_winner && self.base.winner || !*is_winner && !self.base.winner
-            }
-            Tag::Avtor(author) => self.base.author.contains(author),
-            Tag::Splezani(poskus) => self.grades.iter().any(|g| match user {
-                Some(username) => &g.username == username && &g.attempt == poskus,
-                None => &g.attempt == poskus,
-            }),
-            Tag::SpremenjeniZaDatumom(timestamp) => self.base.updated_at >= *timestamp,
-            Tag::Ime(name) => self.base.name.contains(name),
-            Tag::MinGrade(g) => self.base.grade >= *g,
-            Tag::MaxGrade(g) => self.base.grade <= *g,
-            Tag::SectorId(id) => self.base.sector_id == *id,
-        }
+                Tag::Zmagovalni(is_winner) => {
+                    *is_winner && self.base.winner || !*is_winner && !self.base.winner
+                }
+                Tag::Avtor(author) => self.base.author.contains(author),
+                Tag::Splezani(poskus) => self.grades.iter().any(|g| match user {
+                    Some(username) => &g.username == username && &g.attempt == poskus,
+                    None => &g.attempt == poskus,
+                }),
+                Tag::SpremenjeniZaDatumom(timestamp) => self.base.updated_at >= *timestamp,
+                Tag::Ime(name) => self.base.name.contains(name),
+                Tag::MinGrade(g) => self.base.grade >= *g,
+                Tag::MaxGrade(g) => self.base.grade <= *g,
+                Tag::SectorId(id) => self.base.sector_id == *id,
+            };
     }
 }
 

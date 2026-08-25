@@ -17,9 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -132,7 +132,7 @@ fun FilterBar(
 
                 Spacer(Modifier.width(8.dp))
 
-                // 3. Search Icon
+                // Search Icon
                 IconButton(onClick = onExpand) {
                     Icon(Icons.Default.Search, contentDescription = "Išči po avtorju")
                 }

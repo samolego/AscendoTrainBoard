@@ -272,7 +272,6 @@ fun TagSearchBar(
                     }
                 }
 
-                // If query is empty, show all sectors as shortcut (per requirement)
                 if (query.isBlank()) {
                     sectors.forEach { sector ->
                         DropdownMenuItem(
@@ -286,7 +285,6 @@ fun TagSearchBar(
                 }
 
             } else {
-                // --- STEP 2: VALUE SELECTION MODE ---
                 val category = selectedCategory!!
 
                 when (category) {
@@ -331,7 +329,7 @@ fun TagSearchBar(
 
                     "Splezani" -> {
                         // Iterate Enum values
-                        Attempt.values().forEach { attempt ->
+                        Attempt.entries.forEach { attempt ->
                             if (query.isBlank() || attempt.name.lowercase().contains(lowerQuery)) {
                                 DropdownMenuItem(text = { Text(attempt.name) }, onClick = {
                                     onAddTag(Tag(splezani = attempt))
@@ -345,7 +343,7 @@ fun TagSearchBar(
 
                     else -> {
                         // Generic Value Input
-                        if (query.isNotBlank()) {
+                        /*if (query.isNotBlank()) {
                             DropdownMenuItem(
                                 text = { Text("Uporabi: $query") },
                                 onClick = {
@@ -365,7 +363,7 @@ fun TagSearchBar(
                             )
                         } else {
                             DropdownMenuItem(text = { Text("Vpiši vrednost...") }, onClick = {})
-                        }
+                        }*/
                     }
                 }
             }

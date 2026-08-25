@@ -94,6 +94,7 @@ fun ProblemDetailsScreen(
 
     val goBack = {
         viewModel.toggleEditMode(false)
+        viewModel.clearError()
         onNavigateBack()
     }
     val shouldShowGradesInfo =

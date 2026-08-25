@@ -22,8 +22,9 @@ import kotlinx.serialization.descriptors.*
 import kotlinx.serialization.encoding.*
 
 /**
- * Filtering tag. Only one property should be set per object.
+ * Filtering tag. Only one property should be set per object, except for \"negated\"
  *
+ * @param negated 
  * @param tekmovalni 
  * @param zmagovalni 
  * @param avtor 
@@ -37,6 +38,8 @@ import kotlinx.serialization.encoding.*
 @Serializable
 
 data class Tag (
+
+    @SerialName(value = "Negated") val negated: kotlin.Boolean? = null,
 
     @SerialName(value = "Tekmovalni") val tekmovalni: kotlin.Boolean? = null,
 

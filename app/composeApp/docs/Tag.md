@@ -4,6 +4,7 @@
 ## Properties
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
+| **negated** | **kotlin.Boolean** |  |  [optional] |
 | **tekmovalni** | **kotlin.Boolean** |  |  [optional] |
 | **zmagovalni** | **kotlin.Boolean** |  |  [optional] |
 | **avtor** | **kotlin.String** |  |  [optional] |

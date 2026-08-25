@@ -93,6 +93,10 @@ fun AuthenticationScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var remainingSeconds by remember { mutableStateOf(0L) }
+    val goBack = {
+        viewModel.clearError();
+        onNavigateBack()
+    }
 
     LaunchedEffect(state.timeoutUntil) {
         state.timeoutUntil?.let { targetTime ->
@@ -132,7 +136,7 @@ fun AuthenticationScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { onNavigateBack() }
+                    onClick = { goBack() }
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
@@ -154,7 +158,7 @@ fun AuthenticationScreen(
             if (state.isAuthenticated) {
                 AuthenticatedUserView(
                     username = state.username,
-                    onNavigateBack = onNavigateBack,
+                    onNavigateBack = goBack,
                 )
                 return@Scaffold
             }
