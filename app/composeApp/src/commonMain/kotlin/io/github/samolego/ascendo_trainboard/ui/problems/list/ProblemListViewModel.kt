@@ -10,8 +10,6 @@ import io.github.samolego.ascendo_trainboard.ui.components.error.ErrorUiState
 import io.github.samolego.ascendo_trainboard.ui.components.error.toErrorUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -148,12 +146,10 @@ class ProblemListViewModel(
         _state.update { state ->
             val newTags = state.tags.toMutableList()
 
-            // Remove existing tag of the same type to override it
-            // Use serialization to find the active key (e.g. "Avtor", "SectorId")
-            // Default Json configuration omits nulls, so only the set property will be present.
-            val activeKey = getTagKey(tag)
+            // Remove existing tag of the same type to override it.
+            val activeKey = tag.searchableKey()
             if (activeKey != null) {
-                newTags.removeAll { getTagKey(it) == activeKey }
+                newTags.removeAll { it.searchableKey() == activeKey }
             }
 
             newTags.add(tag)
@@ -197,15 +193,5 @@ class ProblemListViewModel(
 
     fun clearError() {
         _state.update { it.copy(error = null) }
-    }
-}
-
-private fun getTagKey(tag: Tag): String? {
-    // Encode to JSON tree; default configuration skips nulls.
-    // The resulting object should have exactly one key.
-    return try {
-        Json.encodeToJsonElement(Tag.serializer(), tag).jsonObject.keys.firstOrNull()
-    } catch (e: Exception) {
-        null
     }
 }

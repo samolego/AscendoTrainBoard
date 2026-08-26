@@ -39,7 +39,7 @@ import kotlinx.serialization.encoding.*
 
 data class Tag (
 
-    @SerialName(value = "Negated") val negated: kotlin.Boolean? = null,
+    @SerialName(value = "negated") val negated: kotlin.Boolean? = null,
 
     @SerialName(value = "Tekmovalni") val tekmovalni: kotlin.Boolean? = null,
 

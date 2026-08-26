@@ -274,6 +274,13 @@ impl DiskProblem {
 
     pub fn has_tag(&self, ptag: &PossiblyNegatedTag, user: &Option<String>) -> bool {
         let PossiblyNegatedTag { tag, negated } = ptag;
+        if let Tag::Splezani(poskus) = tag {
+            // We handle this separately, as it needs to check the user
+            return self.grades.iter().any(|g| match user {
+                Some(username) => &g.username == username && ((&g.attempt == poskus) ^ negated),
+                None => (&g.attempt == poskus) ^ negated,
+            });
+        }
         return negated
             ^ match tag {
                 Tag::Tekmovalni(is_comp) => {
@@ -295,10 +302,11 @@ impl DiskProblem {
                     *is_winner && self.base.winner || !*is_winner && !self.base.winner
                 }
                 Tag::Avtor(author) => self.base.author.contains(author),
-                Tag::Splezani(poskus) => self.grades.iter().any(|g| match user {
-                    Some(username) => &g.username == username && &g.attempt == poskus,
-                    None => &g.attempt == poskus,
-                }),
+                Tag::Splezani(poskus) => {
+                    // Shouldn't come to here, as it's handled in the `filter` method.
+                    eprintln!("[ERROR]: Splezani tag should be filtered separately!");
+                    false
+                }
                 Tag::SpremenjeniZaDatumom(timestamp) => self.base.updated_at >= *timestamp,
                 Tag::Ime(name) => self.base.name.contains(name),
                 Tag::MinGrade(g) => self.base.grade >= *g,

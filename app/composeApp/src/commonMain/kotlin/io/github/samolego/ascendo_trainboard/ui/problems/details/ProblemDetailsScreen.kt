@@ -1,5 +1,6 @@
 package io.github.samolego.ascendo_trainboard.ui.problems.details
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,6 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -55,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.samolego.ascendo_trainboard.api.HoldType
 import io.github.samolego.ascendo_trainboard.api.ProblemHold
@@ -81,6 +84,7 @@ import kotlin.time.Instant
 fun ProblemDetailsScreen(
     viewModel: ProblemDetailsViewModel,
     onNavigateBack: () -> Unit,
+    onSearchByAuthor: (String) -> Unit = {},
     availableSectors: List<SectorSummary>? = null,
 ) {
     val state by viewModel.state.collectAsState()
@@ -236,6 +240,7 @@ fun ProblemDetailsScreen(
                             ProblemDetails(
                                 problem = state.problem!!,
                                 sector = state.sector!!,
+                                onSearchByAuthor = onSearchByAuthor,
                                 imageUrl = viewModel.getSectorImageUrl(state.sector!!.id),
                                 editable = editMode,
                                 holds = if (editMode) {
@@ -448,6 +453,7 @@ fun ProblemDetails(
     problem: Problem,
     sector: Sector,
     imageUrl: String,
+    onSearchByAuthor: (String) -> Unit = {},
     editable: Boolean,
     holds: List<ProblemHold>,
     onHoldUpdated: (Int, ProblemHold) -> Unit,
@@ -497,9 +503,17 @@ fun ProblemDetails(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.End,
         ) {
+            val authorModifier = if (!editable) {
+                Modifier.clickable { onSearchByAuthor(problem.author) }
+            } else {
+                Modifier
+            }
             Text(
                 text = problem.author,
                 style = MaterialTheme.typography.bodyMedium,
+                color = if (!editable) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                textDecoration = if (!editable) TextDecoration.Underline else TextDecoration.None,
+                modifier = authorModifier
             )
         }
 
@@ -608,6 +622,7 @@ fun GradesInfo(
                     modifier = Modifier
                         .fillMaxWidth(),
                     grade = grade,
+//                    attempt =
                 )
             }
         }

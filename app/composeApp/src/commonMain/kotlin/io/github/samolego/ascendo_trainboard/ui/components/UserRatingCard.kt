@@ -25,6 +25,7 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.Grade
 fun UserRatingCard(
     modifier: Modifier = Modifier,
     grade: Grade,
+//    attempt: Attempt,
 ) {
     Card(
         modifier = modifier.clip(RoundedCornerShape(12.dp)),

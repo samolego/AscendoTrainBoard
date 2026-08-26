@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
+import io.github.samolego.ascendo_trainboard.api.generated.models.Tag
 import io.github.samolego.ascendo_trainboard.getPlatform
 import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationScreen
 import io.github.samolego.ascendo_trainboard.ui.authentication.AuthenticationViewModel
@@ -66,6 +67,11 @@ fun AppNavigation(
             ProblemDetailsScreen(
                 viewModel = problemDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
+                onSearchByAuthor = { author ->
+                    problemListViewModel.clearFilters()
+                    problemListViewModel.addTag(Tag(avtor = author))
+                    navController.popBackStack()
+                },
             )
         }
 

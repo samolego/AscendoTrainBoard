@@ -25,12 +25,6 @@ class UserDetailTest : ShouldSpec() {
         // uncomment below to create an instance of UserDetail
         //val modelInstance = UserDetail()
 
-        // to test the property `id`
-        should("test id") {
-            // uncomment below to test the property
-            //modelInstance.id shouldBe ("TODO")
-        }
-
         // to test the property `username`
         should("test username") {
             // uncomment below to test the property
@@ -41,12 +35,6 @@ class UserDetailTest : ShouldSpec() {
         should("test isAdmin") {
             // uncomment below to test the property
             //modelInstance.isAdmin shouldBe ("TODO")
-        }
-
-        // to test the property `createdAt`
-        should("test createdAt") {
-            // uncomment below to test the property
-            //modelInstance.createdAt shouldBe ("TODO")
         }
 
     }

@@ -185,17 +185,6 @@ fun ProblemCard(
                     }
                 }
             }
-
-            // Description (if available)
-            problem.description?.let { description ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
-                )
-            }
         }
     }
 }

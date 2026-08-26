@@ -2,10 +2,12 @@ package io.github.samolego.ascendo_trainboard.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +32,8 @@ fun GradeRangeSelector(
     minGrade: Int,
     maxGrade: Int,
     onGradeRangeChanged: (Int, Int) -> Unit,
+    horizontal: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     var selectedMinGrade by remember(minGrade) { mutableStateOf(minGrade) }
     var selectedMaxGrade by remember(maxGrade) { mutableStateOf(maxGrade) }
@@ -38,19 +42,7 @@ fun GradeRangeSelector(
         mutableStateOf(selectedMinGrade.toFloat()..selectedMaxGrade.toFloat())
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        GradeBadge(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            grade = selectedMinGrade,
-            secondGrade = selectedMaxGrade,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
+    val slider: @Composable () -> Unit = {
         RangeSlider(
             value = currentSliderRange,
             onValueChange = { range ->
@@ -68,6 +60,41 @@ fun GradeRangeSelector(
             steps = 31,
             modifier = Modifier.fillMaxWidth()
         )
+    }
+
+    val badge: @Composable () -> Unit = {
+        GradeBadge(
+            grade = selectedMinGrade,
+            secondGrade = selectedMaxGrade,
+            shortLabel = horizontal,
+        )
+    }
+
+    if (horizontal) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            badge()
+            Spacer(Modifier.width(8.dp))
+            slider()
+        }
+    } else {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            GradeBadge(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                grade = selectedMinGrade,
+                secondGrade = selectedMaxGrade,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            slider()
+        }
     }
 }
 
@@ -120,10 +147,15 @@ fun GradeBadge(
     modifier: Modifier = Modifier,
     grade: Int,
     usePrefixText: Boolean = true,
+    shortLabel: Boolean = false,
     secondGrade: Int? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val text = when {
+        shortLabel && secondGrade != null && secondGrade != grade ->
+            "${getFrenchGrade(grade)}-${getFrenchGrade(secondGrade)}"
+
+        shortLabel -> getFrenchGrade(grade)
         !usePrefixText -> getFrenchGrade(grade)
         secondGrade == null || secondGrade == grade -> "Ocena = ${getFrenchGrade(grade)}"
         else -> "${getFrenchGrade(grade)} ≤ ocena ≤ ${getFrenchGrade(secondGrade)}"

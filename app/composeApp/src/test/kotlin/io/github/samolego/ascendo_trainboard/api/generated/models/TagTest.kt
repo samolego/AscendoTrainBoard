@@ -26,10 +26,22 @@ class TagTest : ShouldSpec() {
         // uncomment below to create an instance of Tag
         //val modelInstance = Tag()
 
+        // to test the property `negated`
+        should("test negated") {
+            // uncomment below to test the property
+            //modelInstance.negated shouldBe ("TODO")
+        }
+
         // to test the property `tekmovalni`
         should("test tekmovalni") {
             // uncomment below to test the property
             //modelInstance.tekmovalni shouldBe ("TODO")
+        }
+
+        // to test the property `zmagovalni`
+        should("test zmagovalni") {
+            // uncomment below to test the property
+            //modelInstance.zmagovalni shouldBe ("TODO")
         }
 
         // to test the property `avtor`

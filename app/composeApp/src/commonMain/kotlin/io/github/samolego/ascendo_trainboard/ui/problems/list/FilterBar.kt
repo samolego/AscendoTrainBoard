@@ -29,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +61,15 @@ fun FilterBar(
     onExpand: () -> Unit = {},
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    var selectedTag by remember { mutableStateOf<SearchableTag?>(null) }
+
+    // Scrolling collapses the bar; clearing the draft filter puts us back at the default stage.
+    LaunchedEffect(isCollapsed) {
+        if (isCollapsed) {
+            searchQuery = ""
+            selectedTag = null
+        }
+    }
 
     // Use AnimatedContent to switch between the collapsed and expanded content
     AnimatedContent(
@@ -140,53 +150,80 @@ fun FilterBar(
 
         } else {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Tag Search Input
+                // Category selector and grade range always share the top row.
                 Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    TagSearchBar(
-                        query = searchQuery,
-                        onQueryChange = { searchQuery = it },
-                        onAddTag = onAddTag,
-                        sectors = sectors,
+                    CategorySelector(
+                        selectedTag = selectedTag,
+                        onCategorySelected = { tag ->
+                            selectedTag = tag
+                            searchQuery = ""
+                        },
+                        modifier = Modifier.width(120.dp)
+                    )
+                    GradeRangeSelector(
+                        minGrade = minGrade,
+                        maxGrade = maxGrade,
+                        onGradeRangeChanged = onGradeRangeChanged,
+                        horizontal = true,
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                // Active Tags Chips
-                if (tags.isNotEmpty()) {
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(tags.filter { it.minGrade == null && it.maxGrade == null }) { tag ->
-                            TagChip(
-                                tag = tag,
-                                sectorNameResolver = { id -> sectors.find { it.id == id }?.name },
-                                onRemove = { onRemoveTag(tag) }
-                            )
-                        }
-                    }
+                // Expanded filter value input appears below the top row.
+                selectedTag?.let { tag ->
+                    TagSearchBar(
+                        selectedTag = tag,
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        onAddTag = {
+                            onAddTag(it)
+                            selectedTag = null
+                            searchQuery = ""
+                        },
+                        onClear = {
+                            selectedTag = null
+                            searchQuery = ""
+                        },
+                        sectors = sectors,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
                 }
 
-                GradeRangeSelector(
-                    minGrade = minGrade,
-                    maxGrade = maxGrade,
-                    onGradeRangeChanged = onGradeRangeChanged,
-                )
-
-                // Clear Filters Button
+                // Active tags and clear button share the bottom row.
                 if (tags.isNotEmpty()) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
+                        LazyRow(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(tags.filter { it.minGrade == null && it.maxGrade == null }) { tag ->
+                                TagChip(
+                                    tag = tag,
+                                    sectorNameResolver = { id -> sectors.find { it.id == id }?.name },
+                                    onRemove = { onRemoveTag(tag) }
+                                )
+                            }
+                        }
+
                         TextButton(onClick = {
                             onClearFilters()
                             searchQuery = ""
+                            selectedTag = null
                         }) {
                             Icon(Icons.Default.Clear, contentDescription = null)
                             Spacer(modifier = Modifier.width(4.dp))

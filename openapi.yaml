@@ -1121,7 +1121,7 @@ components:
       type: object
       description: Filtering tag. Only one property should be set per object, except for "negated"
       properties:
-        Negated:
+        negated:
           type: boolean
         Tekmovalni:
           type: boolean

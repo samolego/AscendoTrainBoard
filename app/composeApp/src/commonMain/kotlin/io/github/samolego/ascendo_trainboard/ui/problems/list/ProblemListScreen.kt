@@ -33,7 +33,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,11 +56,18 @@ fun ProblemListScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val listState = rememberLazyListState()
+    var isFilterCollapsed by remember { mutableStateOf(false) }
 
     val sectorId2name by remember(state.sectors) {
         lazy { state.sectors.associateBy { it.id }.mapValues { it.value.name } }
     }
 
+
+    // Collapse filters as soon as the list is scrolled away from the top.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex > 0 }
+            .collect { isFilterCollapsed = it }
+    }
 
     // Detect when user scrolls near bottom
     LaunchedEffect(listState) {
@@ -125,6 +134,8 @@ fun ProblemListScreen(
                     onRemoveTag = viewModel::removeTag,
                     onGradeRangeChanged = viewModel::setGradeRange,
                     onClearFilters = viewModel::clearFilters,
+                    isCollapsed = isFilterCollapsed,
+                    onExpand = { isFilterCollapsed = false },
                 )
             }
 
