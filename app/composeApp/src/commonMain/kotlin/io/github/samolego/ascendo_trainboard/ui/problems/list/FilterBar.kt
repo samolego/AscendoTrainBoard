@@ -43,7 +43,6 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.SectorSummary
 import io.github.samolego.ascendo_trainboard.api.generated.models.Tag
 import io.github.samolego.ascendo_trainboard.ui.components.GradeBadge
 import io.github.samolego.ascendo_trainboard.ui.components.GradeRangeSelector
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -237,7 +236,6 @@ fun FilterBar(
 }
 
 
-@Preview
 @Composable
 private fun PreviewExtendedFilterBar() {
     FilterBar(
@@ -254,7 +252,6 @@ private fun PreviewExtendedFilterBar() {
     )
 }
 
-@Preview
 @Composable
 private fun PreviewCollapsedFilterBar() {
     FilterBar(

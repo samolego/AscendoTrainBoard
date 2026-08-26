@@ -7,7 +7,6 @@ import io.github.samolego.ascendo_trainboard.api.generated.models.Tag
 /**
  * JSON / API keys for the generated [Tag] properties.
  */
-const val TAG_KEY_NEGATED = "negated"
 const val TAG_KEY_TEKMVALNI = "Tekmovalni"
 const val TAG_KEY_ZMAGVALNI = "Zmagovalni"
 const val TAG_KEY_AVTOR = "Avtor"

@@ -38,7 +38,6 @@ import io.github.samolego.ascendo_trainboard.ui.getFrenchGrade
 import io.github.samolego.ascendo_trainboard.ui.theme.darkGold
 import io.github.samolego.ascendo_trainboard.ui.theme.gold
 import io.github.samolego.ascendo_trainboard.ui.theme.lightGold
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
 
 @Composable
@@ -210,7 +209,6 @@ private fun WinnerBadge() {
     }
 }
 
-@Preview
 @Composable
 private fun ProblemCardPreview() {
     ProblemCard(
@@ -229,7 +227,6 @@ private fun ProblemCardPreview() {
     )
 }
 
-@Preview
 @Composable
 private fun ProblemCardPreviewMini() {
     ProblemCard(
